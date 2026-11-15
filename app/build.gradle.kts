@@ -4,7 +4,7 @@ android {
     compileSdk = 34
     defaultConfig { applicationId = "com.afshin.pcbtrace"; minSdk = 29; targetSdk = 34; versionCode = 1; versionName = "1.0" }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
-    kotlinOptions { jvmTarget = "17" }
+    kotlinOptions { jvmTarget = "17"; freeCompilerArgs += "-opt-in=androidx.camera.camera2.interop.ExperimentalCamera2Interop" }
 }
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
