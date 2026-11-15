@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PCB Trace Enhancer</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--tx:#14181f;--mut:#667085;--ac:#0b7a75;--bd:#d8dce3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1216;--card:#181c22;--tx:#e8ebf0;--mut:#98a2b3;--ac:#2dd4bf;--bd:#2a313b}}
+:root[data-theme="dark"]{--bg:#0f1216;--card:#181c22;--tx:#e8ebf0;--mut:#98a2b3;--ac:#2dd4bf;--bd:#2a313b}
+html{scroll-padding-top:env(safe-area-inset-top,0px);color-scheme:light dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 system-ui,Tahoma,sans-serif;padding:12px;max-width:900px;margin-inline:auto}
+h1{font-size:18px;margin:4px 0 10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
+.view{overflow:auto;max-height:62vh;border-radius:8px;background:#000;touch-action:pan-x pan-y pinch-zoom}
+canvas{display:block;width:100%;height:auto}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,select,.btn{font:inherit;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px 12px}
+button.p,.btn.p{background:var(--ac);color:#fff;border-color:var(--ac)}
+.ctl{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+@media (max-width:560px){.ctl{grid-template-columns:1fr}}
+label{display:flex;flex-direction:column;font-size:13px;color:var(--mut)}
+label b{color:var(--tx);font-weight:600;display:flex;justify-content:space-between}
+input[type=range]{width:100%;accent-color:var(--ac)}
+input[type=file]{display:none}
+.mut{color:var(--mut);font-size:13px}
+</style>
+</head>
+<body>
+<h1>🔬 تقویت ردپای خطوط و فوت‌پرینت برد الکترونیکی</h1>
+<div class="card">
+  <div class="row">
+    <label class="btn p" for="f">گالری</label><input id="f" type="file" accept="image/jpeg,image/png,image/webp,image/bmp,image/gif,image/avif,image/*"><button class="p" id="camb">📷 دوربین ×۳</button><input id="cam" type="file" accept="image/*" capture="environment">
+    <button id="hold">نگه دار = اصلی</button>
+    <button id="dl">ذخیره PNG</button><button id="sh">اشتراک‌گذاری</button>
+  </div>
+  <p class="mut" id="msg">عکس برد را انتخاب کنید. پردازش کاملاً روی دستگاه شما انجام می‌شود.</p>
+</div>
+<div class="card"><div class="view" id="view"><canvas id="c"></canvas></div>
+  <label style="margin-top:8px"><b>زوم <span id="zv">1×</span></b><input type="range" id="zoom" min="1" max="5" step="0.1" value="1"></label>
+</div>
+<div class="card">
+  <div class="row" style="margin-bottom:10px">
+    <button data-p="auto" class="p">خودکار</button>
+    <button data-p="neg">نگاتیو</button>
+    <button data-p="heavy">شدید</button>
+    <button data-p="heat">حرارتی</button>
+    <button data-p="soft">ملایم</button>
+  </div>
+  <div class="ctl">
+    <label><b>کانال</b><select id="ch"><option value="auto">خودکار (پرتضاد‌ترین)</option><option value="l">روشنایی</option><option value="r">قرمز</option><option value="g">سبز</option><option value="b">آبی</option></select></label>
+    <label><b>نمایش</b><select id="cm"><option value="gray">خاکستری</option><option value="heat">حرارتی</option><option value="color">رنگ حفظ‌شده</option></select></label>
+    <label><b>حذف سایه/نور ناهمگن <span id="v_ff"></span></b><input type="range" id="ff" min="0" max="120" value="40"></label>
+    <label><b>تضاد محلی (Wallis) – شعاع <span id="v_wr"></span></b><input type="range" id="wr" min="0" max="60" value="12"></label>
+    <label><b>تضاد محلی – قدرت <span id="v_wg"></span></b><input type="range" id="wg" min="0.5" max="6" step="0.1" value="2"></label>
+    <label><b>کف نویز <span id="v_nf"></span></b><input type="range" id="nf" min="1" max="30" value="6"></label>
+    <label><b>شارپ DoG – شعاع <span id="v_sr"></span></b><input type="range" id="sr" min="1" max="12" value="3"></label>
+    <label><b>شارپ DoG – مقدار <span id="v_sa"></span></b><input type="range" id="sa" min="0" max="5" step="0.1" value="1.2"></label>
+    <label><b>کاهش نویز <span id="v_dn"></span></b><input type="range" id="dn" min="0" max="3" value="1"></label>
+    <label><b>گاما <span id="v_gm"></span></b><input type="range" id="gm" min="0.4" max="2.5" step="0.05" value="1"></label>
+    <label><b>برش سیاه/سفید (%) <span id="v_cl"></span></b><input type="range" id="cl" min="0" max="10" step="0.1" value="1"></label>
+    <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="inv"><b>نگاتیو (وارونه)</b></label>
+  </div>
+</div>
+<div id="ov" style="display:none;position:fixed;inset:0;z-index:99;background:#000;flex-direction:column;color:#fff">
+<video id="vd" autoplay playsinline muted style="flex:1;min-height:0;width:100%;object-fit:contain"></video>
+<div style="padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;background:#111">
+<label style="color:#fff"><b style="color:#fff">زوم <span id="zt"></span></b><input type="range" id="zs" min="1" max="8" step="0.1" value="3"></label>
+<div class="row" style="justify-content:space-between"><button id="xc">بستن</button><button id="tb" style="display:none">🔦 فلش</button><label style="flex-direction:row;gap:4px;color:#fff"><input type="checkbox" id="fr">فریم زنده</label><button class="p" id="shot">عکس بگیر</button></div></div></div>
+<script>
+const $=id=>document.getElementById(id),cv=$('c'),ctx=cv.getContext('2d',{willReadFrequently:true});
+let W=0,H=0,orig=null,showOrig=false,tmr=null;
+const ids=['ff','wr','wg','nf','sr','sa','dn','gm','cl'];
+function box(a,w,h,r){r=r|0;if(r<1)return a.slice();const t=new Float32Array(a.length),o=new Float32Array(a.length),n=2*r+1;
+ for(let y=0;y<h;y++){const b=y*w;let s=0;for(let k=-r;k<=r;k++)s+=a[b+Math.min(Math.max(k,0),w-1)];
+  for(let x=0;x<w;x++){t[b+x]=s/n;s+=a[b+Math.min(x+r+1,w-1)]-a[b+Math.max(x-r,0)];}}
+ for(let x=0;x<w;x++){let s=0;for(let k=-r;k<=r;k++)s+=t[Math.min(Math.max(k,0),h-1)*w+x];
+  for(let y=0;y<h;y++){o[y*w+x]=s/n;s+=t[Math.min(y+r+1,h-1)*w+x]-t[Math.max(y-r,0)*w+x];}}
+ return o}
+const gb=(a,w,h,r)=>box(box(a,w,h,r),w,h,r);
+function heat(v){const S=[[0,0,4],[87,16,110],[188,55,84],[249,142,9],[252,255,164]];const p=v/255*4,i=Math.min(3,p|0),f=p-i;return S[i].map((c,k)=>c+(S[i+1][k]-c)*f)}
+function run(){
+ if(!orig)return;
+ if(showOrig){ctx.putImageData(orig,0,0);return}
+ const g=k=>+$(k).value;ids.forEach(k=>$('v_'+k).textContent=$(k).value);
+ const d=orig.data,N=W*H,R=new Float32Array(N),G=new Float32Array(N),B=new Float32Array(N),L=new Float32Array(N);
+ for(let i=0;i<N;i++){R[i]=d[4*i];G[i]=d[4*i+1];B[i]=d[4*i+2];L[i]=.299*R[i]+.587*G[i]+.114*B[i]}
+ let v;const ch=$('ch').value;
+ if(ch=='auto'){const sd=a=>{let s=0,q=0;for(let i=0;i<N;i+=7){s+=a[i];q+=a[i]*a[i]}const n=N/7,m=s/n;return q/n-m*m};
+  const c=[[sd(L),L],[sd(R),R],[sd(G),G],[sd(B),B]].sort((x,y)=>y[0]-x[0]);v=c[0][1].slice()}
+ else v=({l:L,r:R,g:G,b:B})[ch].slice();
+ if(g('dn')>0)v=box(v,W,H,g('dn'));
+ if(g('ff')>0){const bg=gb(v,W,H,g('ff'));for(let i=0;i<N;i++)v[i]=v[i]/(bg[i]+8)*128}
+ if(g('wr')>0){const m=box(v,W,H,g('wr')),sq=new Float32Array(N);for(let i=0;i<N;i++)sq[i]=v[i]*v[i];const m2=box(sq,W,H,g('wr')),k=g('nf')/4,gn=g('wg')*30;
+  for(let i=0;i<N;i++){const s=Math.sqrt(Math.max(m2[i]-m[i]*m[i],0));v[i]=(v[i]-m[i])/(s+k)*gn+128}}
+ if(g('sa')>0){const b=gb(v,W,H,g('sr')),a=g('sa');for(let i=0;i<N;i++)v[i]+=(v[i]-b[i])*a}
+ const hist=new Uint32Array(256);for(let i=0;i<N;i++){hist[Math.min(255,Math.max(0,v[i]|0))]++}
+ const cut=N*g('cl')/100;let lo=0,hi=255,c=0;for(let i=0;i<256;i++){c+=hist[i];if(c>cut){lo=i;break}}c=0;for(let i=255;i>=0;i--){c+=hist[i];if(c>cut){hi=i;break}}
+ if(hi<=lo)hi=lo+1;const gm=1/g('gm'),inv=$('inv').checked,cm=$('cm').value,out=ctx.createImageData(W,H),o=out.data;
+ for(let i=0;i<N;i++){let t=(v[i]-lo)/(hi-lo);t=t<0?0:t>1?1:t;t=Math.pow(t,gm);if(inv)t=1-t;const y=t*255;
+  let r,gg,b;
+  if(cm=='heat')[r,gg,b]=heat(y);
+  else if(cm=='color'){const l=L[i]+4,k=y/l*1.0;r=R[i]*k;gg=G[i]*k;b=B[i]*k}
+  else r=gg=b=y;
+  o[4*i]=r;o[4*i+1]=gg;o[4*i+2]=b;o[4*i+3]=255}
+ ctx.putImageData(out,0,0)}
+const sched=()=>{clearTimeout(tmr);tmr=setTimeout(run,60)};
+document.querySelectorAll('input[type=range],select,#inv').forEach(e=>e.addEventListener('input',sched));
+const P={auto:{ch:'auto',cm:'gray',ff:40,wr:12,wg:2,nf:6,sr:3,sa:1.2,dn:1,gm:1,cl:1,inv:0},
+ neg:{ch:'auto',cm:'gray',ff:50,wr:10,wg:2.2,nf:5,sr:2,sa:1.5,dn:1,gm:1,cl:1,inv:1},
+ heavy:{ch:'auto',cm:'gray',ff:30,wr:7,wg:4,nf:3,sr:2,sa:2.5,dn:1,gm:0.9,cl:0.5,inv:0},
+ heat:{ch:'auto',cm:'heat',ff:40,wr:10,wg:3,nf:5,sr:3,sa:1.5,dn:1,gm:1,cl:1,inv:0},
+ soft:{ch:'l',cm:'color',ff:60,wr:20,wg:1.2,nf:10,sr:4,sa:0.6,dn:1,gm:1,cl:0.5,inv:0}};
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{const p=P[b.dataset.p];for(const k in p){const e=$(k);if(k=='inv')e.checked=!!p[k];else e.value=p[k]}run()});
+async function load(e){const f=e.target.files[0];e.target.value='';if(!f)return;let im;
+ try{im=await createImageBitmap(f,{imageOrientation:'from-image'})}catch(_){try{im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=URL.createObjectURL(f)})}catch(_2){$('msg').textContent='این فرمت پشتیبانی نمی‌شود (HEIC/RAW؟). در دوربین فرمت را روی JPEG بگذارید.';return}}
+ const w0=im.width,h0=im.height,s=Math.min(1,1600/Math.max(w0,h0));W=Math.round(w0*s);H=Math.round(h0*s);cv.width=W;cv.height=H;ctx.drawImage(im,0,0,W,H);orig=ctx.getImageData(0,0,W,H);
+ $('msg').textContent=W+'×'+H+' (اصل '+w0+'×'+h0+') — اسلایدرها را تنظیم کنید یا یک پریست بزنید.';run()}
+$('f').onchange=load;$('cam').onchange=load;
+let stream=null,track=null,torch=false;
+const ov=$('ov'),vd=$('vd');
+function closeCam(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=track=null;torch=false;ov.style.display='none'}
+async function openCam(){
+ const V={width:{ideal:4096},height:{ideal:3072}};
+ try{try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:'environment'},...V},audio:false})}
+  catch(_){stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',...V},audio:false})}}
+ catch(_){$('cam').click();return}
+ track=stream.getVideoTracks()[0];vd.srcObject=stream;ov.style.display='flex';
+ const c=track.getCapabilities?track.getCapabilities():{},zs=$('zs');
+ if(c.zoom){const z=Math.min(Math.max(3,c.zoom.min),c.zoom.max);zs.min=c.zoom.min;zs.max=c.zoom.max;zs.step=c.zoom.step||0.1;zs.value=z;zs.disabled=false;
+  await track.applyConstraints({advanced:[{zoom:z}]}).catch(()=>{});$('zt').textContent=z.toFixed(1)+'×'+(z<3?' (حداکثر دستگاه)':'')}
+ else{zs.disabled=true;$('zt').textContent='زوم سخت‌افزاری پشتیبانی نمی‌شود'}
+ if(c.focusMode&&c.focusMode.includes('continuous'))track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
+ $('tb').style.display=c.torch?'':'none'}
+$('camb').onclick=()=>window.Android?Android.openCamera():openCam();
+let _nb=[];window.nativeChunk=x=>_nb.push(x);
+window.nativeDone=()=>{const bin=atob(_nb.join(''));_nb=[];const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);load({target:{files:[new Blob([u],{type:'image/jpeg'})]}})};$('xc').onclick=closeCam;
+$('zs').oninput=e=>{const z=+e.target.value;track&&track.applyConstraints({advanced:[{zoom:z}]}).catch(()=>{});$('zt').textContent=z.toFixed(1)+'×'};
+$('tb').onclick=()=>{torch=!torch;track&&track.applyConstraints({advanced:[{torch}]}).catch(()=>{})};
+$('shot').onclick=async()=>{let blob;
+ try{if(!$('fr').checked&&window.ImageCapture)blob=await new ImageCapture(track).takePhoto()}catch(_){}
+ if(!blob){const c=document.createElement('canvas');c.width=vd.videoWidth;c.height=vd.videoHeight;c.getContext('2d').drawImage(vd,0,0);blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.95))}
+ closeCam();load({target:{files:[blob]}})};
+$('sh').onclick=()=>{if(!orig)return;cv.toBlob(async b=>{const file=new File([b],'pcb-enhanced.png',{type:'image/png'});try{if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:'PCB enhanced'});else $('dl').click()}catch(_){}},'image/png')};
+const h=$('hold');const on=v=>e=>{e.preventDefault();showOrig=v;run()};
+['pointerdown'].forEach(t=>h.addEventListener(t,on(true)));['pointerup','pointerleave','pointercancel'].forEach(t=>h.addEventListener(t,on(false)));
+$('zoom').oninput=e=>{cv.style.width=e.target.value*100+'%';$('zv').textContent=e.target.value+'×'};
+$('dl').onclick=()=>{if(!orig)return;if(window.Android){Android.saveImage(cv.toDataURL('image/png').split(',')[1]);return}const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='pcb-enhanced.png';a.click()};
+</script>
+</body>
+</html>
