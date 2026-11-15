@@ -31,7 +31,7 @@ input[type=file]{display:none}
 <h1>🔬 تقویت ردپای خطوط و فوت‌پرینت برد الکترونیکی</h1>
 <div class="card">
   <div class="row">
-    <label class="btn p" for="f">گالری</label><input id="f" type="file" accept="image/jpeg,image/png,image/webp,image/bmp,image/gif,image/avif,image/*"><label class="btn p" for="cam">دوربین</label><input id="cam" type="file" accept="image/*" capture="environment">
+    <label class="btn p" for="f">گالری</label><input id="f" type="file" accept="image/jpeg,image/png,image/webp,image/bmp,image/gif,image/avif,image/*"><button class="p" id="camb">📷 دوربین ×۳</button><input id="cam" type="file" accept="image/*" capture="environment">
     <button id="hold">نگه دار = اصلی</button>
     <button id="dl">ذخیره PNG</button><button id="sh">اشتراک‌گذاری</button>
   </div>
@@ -63,6 +63,11 @@ input[type=file]{display:none}
     <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="inv"><b>نگاتیو (وارونه)</b></label>
   </div>
 </div>
+<div id="ov" style="display:none;position:fixed;inset:0;z-index:99;background:#000;flex-direction:column;color:#fff">
+<video id="vd" autoplay playsinline muted style="flex:1;min-height:0;width:100%;object-fit:contain"></video>
+<div style="padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;background:#111">
+<label style="color:#fff"><b style="color:#fff">زوم <span id="zt"></span></b><input type="range" id="zs" min="1" max="8" step="0.1" value="3"></label>
+<div class="row" style="justify-content:space-between"><button id="xc">بستن</button><button id="tb" style="display:none">🔦 فلش</button><label style="flex-direction:row;gap:4px;color:#fff"><input type="checkbox" id="fr">فریم زنده</label><button class="p" id="shot">عکس بگیر</button></div></div></div>
 <script>
 const $=id=>document.getElementById(id),cv=$('c'),ctx=cv.getContext('2d',{willReadFrequently:true});
 let W=0,H=0,orig=null,showOrig=false,tmr=null;
@@ -113,6 +118,28 @@ async function load(e){const f=e.target.files[0];e.target.value='';if(!f)return;
  const w0=im.width,h0=im.height,s=Math.min(1,1600/Math.max(w0,h0));W=Math.round(w0*s);H=Math.round(h0*s);cv.width=W;cv.height=H;ctx.drawImage(im,0,0,W,H);orig=ctx.getImageData(0,0,W,H);
  $('msg').textContent=W+'×'+H+' (اصل '+w0+'×'+h0+') — اسلایدرها را تنظیم کنید یا یک پریست بزنید.';run()}
 $('f').onchange=load;$('cam').onchange=load;
+let stream=null,track=null,torch=false;
+const ov=$('ov'),vd=$('vd');
+function closeCam(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=track=null;torch=false;ov.style.display='none'}
+async function openCam(){
+ const V={width:{ideal:4096},height:{ideal:3072}};
+ try{try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:'environment'},...V},audio:false})}
+  catch(_){stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',...V},audio:false})}}
+ catch(_){$('cam').click();return}
+ track=stream.getVideoTracks()[0];vd.srcObject=stream;ov.style.display='flex';
+ const c=track.getCapabilities?track.getCapabilities():{},zs=$('zs');
+ if(c.zoom){const z=Math.min(Math.max(3,c.zoom.min),c.zoom.max);zs.min=c.zoom.min;zs.max=c.zoom.max;zs.step=c.zoom.step||0.1;zs.value=z;zs.disabled=false;
+  await track.applyConstraints({advanced:[{zoom:z}]}).catch(()=>{});$('zt').textContent=z.toFixed(1)+'×'+(z<3?' (حداکثر دستگاه)':'')}
+ else{zs.disabled=true;$('zt').textContent='زوم سخت‌افزاری پشتیبانی نمی‌شود'}
+ if(c.focusMode&&c.focusMode.includes('continuous'))track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
+ $('tb').style.display=c.torch?'':'none'}
+$('camb').onclick=openCam;$('xc').onclick=closeCam;
+$('zs').oninput=e=>{const z=+e.target.value;track&&track.applyConstraints({advanced:[{zoom:z}]}).catch(()=>{});$('zt').textContent=z.toFixed(1)+'×'};
+$('tb').onclick=()=>{torch=!torch;track&&track.applyConstraints({advanced:[{torch}]}).catch(()=>{})};
+$('shot').onclick=async()=>{let blob;
+ try{if(!$('fr').checked&&window.ImageCapture)blob=await new ImageCapture(track).takePhoto()}catch(_){}
+ if(!blob){const c=document.createElement('canvas');c.width=vd.videoWidth;c.height=vd.videoHeight;c.getContext('2d').drawImage(vd,0,0);blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.95))}
+ closeCam();load({target:{files:[blob]}})};
 $('sh').onclick=()=>{if(!orig)return;cv.toBlob(async b=>{const file=new File([b],'pcb-enhanced.png',{type:'image/png'});try{if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:'PCB enhanced'});else $('dl').click()}catch(_){}},'image/png')};
 const h=$('hold');const on=v=>e=>{e.preventDefault();showOrig=v;run()};
 ['pointerdown'].forEach(t=>h.addEventListener(t,on(true)));['pointerup','pointerleave','pointercancel'].forEach(t=>h.addEventListener(t,on(false)));
