@@ -31,9 +31,9 @@ input[type=file]{display:none}
 <h1>🔬 تقویت ردپای خطوط و فوت‌پرینت برد الکترونیکی</h1>
 <div class="card">
   <div class="row">
-    <label class="btn p" for="f">انتخاب عکس</label><input id="f" type="file" accept="image/*">
+    <label class="btn p" for="f">گالری</label><input id="f" type="file" accept="image/jpeg,image/png,image/webp,image/bmp,image/gif,image/avif,image/*"><label class="btn p" for="cam">دوربین</label><input id="cam" type="file" accept="image/*" capture="environment">
     <button id="hold">نگه دار = اصلی</button>
-    <button id="dl">ذخیره PNG</button>
+    <button id="dl">ذخیره PNG</button><button id="sh">اشتراک‌گذاری</button>
   </div>
   <p class="mut" id="msg">عکس برد را انتخاب کنید. پردازش کاملاً روی دستگاه شما انجام می‌شود.</p>
 </div>
@@ -108,7 +108,12 @@ const P={auto:{ch:'auto',cm:'gray',ff:40,wr:12,wg:2,nf:6,sr:3,sa:1.2,dn:1,gm:1,c
  heat:{ch:'auto',cm:'heat',ff:40,wr:10,wg:3,nf:5,sr:3,sa:1.5,dn:1,gm:1,cl:1,inv:0},
  soft:{ch:'l',cm:'color',ff:60,wr:20,wg:1.2,nf:10,sr:4,sa:0.6,dn:1,gm:1,cl:0.5,inv:0}};
 document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{const p=P[b.dataset.p];for(const k in p){const e=$(k);if(k=='inv')e.checked=!!p[k];else e.value=p[k]}run()});
-$('f').onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{const m=1600,s=Math.min(1,m/Math.max(im.width,im.height));W=Math.round(im.width*s);H=Math.round(im.height*s);cv.width=W;cv.height=H;ctx.drawImage(im,0,0,W,H);orig=ctx.getImageData(0,0,W,H);$('msg').textContent=W+'×'+H+' — اسلایدرها را تنظیم کنید یا یک پریست بزنید.';run()};im.src=URL.createObjectURL(f)};
+async function load(e){const f=e.target.files[0];e.target.value='';if(!f)return;let im;
+ try{im=await createImageBitmap(f,{imageOrientation:'from-image'})}catch(_){try{im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=URL.createObjectURL(f)})}catch(_2){$('msg').textContent='این فرمت پشتیبانی نمی‌شود (HEIC/RAW؟). در دوربین فرمت را روی JPEG بگذارید.';return}}
+ const w0=im.width,h0=im.height,s=Math.min(1,1600/Math.max(w0,h0));W=Math.round(w0*s);H=Math.round(h0*s);cv.width=W;cv.height=H;ctx.drawImage(im,0,0,W,H);orig=ctx.getImageData(0,0,W,H);
+ $('msg').textContent=W+'×'+H+' (اصل '+w0+'×'+h0+') — اسلایدرها را تنظیم کنید یا یک پریست بزنید.';run()}
+$('f').onchange=load;$('cam').onchange=load;
+$('sh').onclick=()=>{if(!orig)return;cv.toBlob(async b=>{const file=new File([b],'pcb-enhanced.png',{type:'image/png'});try{if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:'PCB enhanced'});else $('dl').click()}catch(_){}},'image/png')};
 const h=$('hold');const on=v=>e=>{e.preventDefault();showOrig=v;run()};
 ['pointerdown'].forEach(t=>h.addEventListener(t,on(true)));['pointerup','pointerleave','pointercancel'].forEach(t=>h.addEventListener(t,on(false)));
 $('zoom').oninput=e=>{cv.style.width=e.target.value*100+'%';$('zv').textContent=e.target.value+'×'};
