@@ -13,6 +13,9 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import android.graphics.*
+import android.media.ExifInterface
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 class MainActivity : ComponentActivity() {
@@ -25,7 +28,7 @@ class MainActivity : ComponentActivity() {
     private val camResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         val p = r.data?.getStringExtra("path") ?: return@registerForActivityResult
         Thread {
-            val s = Base64.encodeToString(File(p).readBytes(), Base64.NO_WRAP)
+            val s = Base64.encodeToString(prep(p), Base64.NO_WRAP)
             var i = 0
             while (i < s.length) {
                 val part = s.substring(i, minOf(i + 400000, s.length)); i += 400000
@@ -37,6 +40,19 @@ class MainActivity : ComponentActivity() {
     private val permReq = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         if (ok) camResult.launch(Intent(this, CameraActivity::class.java))
         else Toast.makeText(this, "Camera permission denied", Toast.LENGTH_LONG).show()
+    }
+
+    private fun prep(path: String): ByteArray {
+        val o = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(path, o)
+        var k = 1
+        while (maxOf(o.outWidth, o.outHeight) / k > 3200) k *= 2
+        val bm = BitmapFactory.decodeFile(path, BitmapFactory.Options().apply { inSampleSize = k })
+        val rot = when (ExifInterface(path).getAttributeInt(ExifInterface.TAG_ORIENTATION, 1)) {
+            6 -> 90f; 3 -> 180f; 8 -> 270f; else -> 0f }
+        val b2 = if (rot != 0f) Bitmap.createBitmap(bm, 0, 0, bm.width, bm.height, Matrix().apply { postRotate(rot) }, true) else bm
+        val bo = ByteArrayOutputStream(); b2.compress(Bitmap.CompressFormat.JPEG, 93, bo)
+        return bo.toByteArray()
     }
 
     inner class Bridge {
