@@ -18,6 +18,7 @@ canvas{display:block;width:100%;height:auto}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 button,select,.btn{font:inherit;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px 12px}
 button.p,.btn.p{background:var(--ac);color:#fff;border-color:var(--ac)}
+.pr.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 .ctl{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
 @media (max-width:560px){.ctl{grid-template-columns:1fr}}
 label{display:flex;flex-direction:column;font-size:13px;color:var(--mut)}
@@ -42,11 +43,11 @@ input[type=file]{display:none}
 </div>
 <div class="card">
   <div class="row" style="margin-bottom:10px">
-    <button data-p="auto" class="p">خودکار</button>
-    <button data-p="neg">نگاتیو</button>
-    <button data-p="heavy">شدید</button>
-    <button data-p="heat">حرارتی</button>
-    <button data-p="soft">ملایم</button>
+    <button data-p="auto" class="pr on">خودکار</button>
+    <button data-p="neg" class="pr">نگاتیو</button>
+    <button data-p="heavy" class="pr">شدید</button>
+    <button data-p="heat" class="pr">حرارتی</button>
+    <button data-p="soft" class="pr">ملایم</button>
   </div>
   <div class="ctl">
     <label><b>کانال</b><select id="ch"><option value="auto">خودکار (پرتضاد‌ترین)</option><option value="l">روشنایی</option><option value="r">قرمز</option><option value="g">سبز</option><option value="b">آبی</option></select></label>
@@ -60,7 +61,7 @@ input[type=file]{display:none}
     <label><b>کاهش نویز <span id="v_dn"></span></b><input type="range" id="dn" min="0" max="3" value="1"></label>
     <label><b>گاما <span id="v_gm"></span></b><input type="range" id="gm" min="0.4" max="2.5" step="0.05" value="1"></label>
     <label><b>برش سیاه/سفید (%) <span id="v_cl"></span></b><input type="range" id="cl" min="0" max="10" step="0.1" value="1"></label>
-    <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="inv"><b>نگاتیو (وارونه)</b></label>
+    <label><b>رزولوشن پردازش</b><select id="mx"><option value="1200">1200</option><option value="1600">1600</option><option value="2400" selected>2400</option><option value="3200">3200</option></select></label><label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="inv"><b>نگاتیو (وارونه)</b></label>
   </div>
 </div>
 <div id="ov" style="display:none;position:fixed;inset:0;z-index:99;background:#000;flex-direction:column;color:#fff">
@@ -106,18 +107,18 @@ function run(){
   o[4*i]=r;o[4*i+1]=gg;o[4*i+2]=b;o[4*i+3]=255}
  ctx.putImageData(out,0,0)}
 const sched=()=>{clearTimeout(tmr);tmr=setTimeout(run,60)};
-document.querySelectorAll('input[type=range],select,#inv').forEach(e=>e.addEventListener('input',sched));
+document.querySelectorAll('input[type=range],select,#inv').forEach(e=>{e.addEventListener('input',sched);if(e.id!='mx')e.addEventListener('input',()=>document.querySelectorAll('.pr').forEach(x=>x.classList.remove('on')))});
 const P={auto:{ch:'auto',cm:'gray',ff:40,wr:12,wg:2,nf:6,sr:3,sa:1.2,dn:1,gm:1,cl:1,inv:0},
  neg:{ch:'auto',cm:'gray',ff:50,wr:10,wg:2.2,nf:5,sr:2,sa:1.5,dn:1,gm:1,cl:1,inv:1},
  heavy:{ch:'auto',cm:'gray',ff:30,wr:7,wg:4,nf:3,sr:2,sa:2.5,dn:1,gm:0.9,cl:0.5,inv:0},
  heat:{ch:'auto',cm:'heat',ff:40,wr:10,wg:3,nf:5,sr:3,sa:1.5,dn:1,gm:1,cl:1,inv:0},
  soft:{ch:'l',cm:'color',ff:60,wr:20,wg:1.2,nf:10,sr:4,sa:0.6,dn:1,gm:1,cl:0.5,inv:0}};
-document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{const p=P[b.dataset.p];for(const k in p){const e=$(k);if(k=='inv')e.checked=!!p[k];else e.value=p[k]}run()});
-async function load(e){const f=e.target.files[0];e.target.value='';if(!f)return;let im;
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.pr').forEach(x=>x.classList.toggle('on',x===b));const p=P[b.dataset.p];for(const k in p){const e=$(k);if(k=='inv')e.checked=!!p[k];else e.value=p[k]}run()});
+async function load(e){const f=e.target.files[0];e.target.value='';if(!f)return;window._lf=f;let im;
  try{im=await createImageBitmap(f,{imageOrientation:'from-image'})}catch(_){try{im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=URL.createObjectURL(f)})}catch(_2){$('msg').textContent='این فرمت پشتیبانی نمی‌شود (HEIC/RAW؟). در دوربین فرمت را روی JPEG بگذارید.';return}}
- const w0=im.width,h0=im.height,s=Math.min(1,1600/Math.max(w0,h0));W=Math.round(w0*s);H=Math.round(h0*s);cv.width=W;cv.height=H;ctx.drawImage(im,0,0,W,H);orig=ctx.getImageData(0,0,W,H);
+ const w0=im.width,h0=im.height,s=Math.min(1,+$('mx').value/Math.max(w0,h0));W=Math.round(w0*s);H=Math.round(h0*s);cv.width=W;cv.height=H;ctx.drawImage(im,0,0,W,H);orig=ctx.getImageData(0,0,W,H);
  $('msg').textContent=W+'×'+H+' (اصل '+w0+'×'+h0+') — اسلایدرها را تنظیم کنید یا یک پریست بزنید.';run()}
-$('f').onchange=load;$('cam').onchange=load;
+$('f').onchange=load;$('cam').onchange=load;$('mx').onchange=()=>window._lf&&load({target:{files:[window._lf]}});
 let stream=null,track=null,torch=false;
 const ov=$('ov'),vd=$('vd');
 function closeCam(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=track=null;torch=false;ov.style.display='none'}
@@ -133,7 +134,9 @@ async function openCam(){
  else{zs.disabled=true;$('zt').textContent='زوم سخت‌افزاری پشتیبانی نمی‌شود'}
  if(c.focusMode&&c.focusMode.includes('continuous'))track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
  $('tb').style.display=c.torch?'':'none'}
-$('camb').onclick=openCam;$('xc').onclick=closeCam;
+$('camb').onclick=()=>window.Android?Android.openCamera():openCam();
+let _nb=[];window.nativeChunk=x=>_nb.push(x);
+window.nativeDone=()=>{const bin=atob(_nb.join(''));_nb=[];const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);load({target:{files:[new Blob([u],{type:'image/jpeg'})]}})};$('xc').onclick=closeCam;
 $('zs').oninput=e=>{const z=+e.target.value;track&&track.applyConstraints({advanced:[{zoom:z}]}).catch(()=>{});$('zt').textContent=z.toFixed(1)+'×'};
 $('tb').onclick=()=>{torch=!torch;track&&track.applyConstraints({advanced:[{torch}]}).catch(()=>{})};
 $('shot').onclick=async()=>{let blob;
@@ -144,7 +147,7 @@ $('sh').onclick=()=>{if(!orig)return;cv.toBlob(async b=>{const file=new File([b]
 const h=$('hold');const on=v=>e=>{e.preventDefault();showOrig=v;run()};
 ['pointerdown'].forEach(t=>h.addEventListener(t,on(true)));['pointerup','pointerleave','pointercancel'].forEach(t=>h.addEventListener(t,on(false)));
 $('zoom').oninput=e=>{cv.style.width=e.target.value*100+'%';$('zv').textContent=e.target.value+'×'};
-$('dl').onclick=()=>{if(!orig)return;const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='pcb-enhanced.png';a.click()};
+$('dl').onclick=()=>{if(!orig)return;if(window.Android){Android.saveImage(cv.toDataURL('image/png').split(',')[1]);return}const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='pcb-enhanced.png';a.click()};
 </script>
 </body>
 </html>
