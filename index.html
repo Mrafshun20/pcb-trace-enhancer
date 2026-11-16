@@ -1,153 +1,1428 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa" dir="rtl" class="dark">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>PCB Trace Enhancer</title>
-<style>
-:root{--bg:#f4f5f7;--card:#fff;--tx:#14181f;--mut:#667085;--ac:#0b7a75;--bd:#d8dce3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1216;--card:#181c22;--tx:#e8ebf0;--mut:#98a2b3;--ac:#2dd4bf;--bd:#2a313b}}
-:root[data-theme="dark"]{--bg:#0f1216;--card:#181c22;--tx:#e8ebf0;--mut:#98a2b3;--ac:#2dd4bf;--bd:#2a313b}
-html{scroll-padding-top:env(safe-area-inset-top,0px);color-scheme:light dark}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 system-ui,Tahoma,sans-serif;padding:12px;max-width:900px;margin-inline:auto}
-h1{font-size:18px;margin:4px 0 10px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
-.view{overflow:auto;max-height:62vh;border-radius:8px;background:#000;touch-action:pan-x pan-y pinch-zoom}
-canvas{display:block;width:100%;height:auto}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-button,select,.btn{font:inherit;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px 12px}
-button.p,.btn.p{background:var(--ac);color:#fff;border-color:var(--ac)}
-.pr.on{background:var(--ac);color:#fff;border-color:var(--ac)}
-.ctl{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
-@media (max-width:560px){.ctl{grid-template-columns:1fr}}
-label{display:flex;flex-direction:column;font-size:13px;color:var(--mut)}
-label b{color:var(--tx);font-weight:600;display:flex;justify-content:space-between}
-input[type=range]{width:100%;accent-color:var(--ac)}
-input[type=file]{display:none}
-.mut{color:var(--mut);font-size:13px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PCB Trace Enhancer Pro | استودیو تخصصی تحلیل و تقویت مدار چاپی</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vazirmatn Font for Persian & JetBrains Mono for Technical Data -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Vazirmatn', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        pcb: {
+                            bg: '#090d16',
+                            panel: '#111827',
+                            card: '#1e293b',
+                            border: '#334155',
+                            green: '#10b981',
+                            neon: '#00f59b',
+                            copper: '#f59e0b',
+                            accent: '#06b6d4'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        body {
+            background-color: #090d16;
+            color: #f8fafc;
+            overflow: hidden;
+        }
+        .pcb-grid-bg {
+            background-color: #06090f;
+            background-image: 
+                linear-gradient(to right, rgba(16, 185, 129, 0.06) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(16, 185, 129, 0.06) 1px, transparent 1px),
+                linear-gradient(to right, rgba(16, 185, 129, 0.12) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(16, 185, 129, 0.12) 1px, transparent 1px);
+            background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #1e293b;
+            border-radius: 999px;
+            outline: none;
+            border: 1px solid #334155;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00f59b;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 245, 155, 0.6);
+            border: 2px solid #090d16;
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #34d399;
+        }
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #10b981;
+        }
+        .neon-glow {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+        }
+        .active-preset {
+            border-color: #00f59b !important;
+            background: rgba(16, 185, 129, 0.15) !important;
+            color: #00f59b !important;
+            box-shadow: 0 0 12px rgba(0, 245, 155, 0.2);
+        }
+        .active-tool {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            color: #06090f !important;
+            font-weight: 700;
+            box-shadow: 0 0 14px rgba(16, 185, 129, 0.45);
+        }
+    </style>
 </head>
-<body>
-<h1>🔬 تقویت ردپای خطوط و فوت‌پرینت برد الکترونیکی</h1>
-<div class="card">
-  <div class="row">
-    <label class="btn p" for="f">گالری</label><input id="f" type="file" accept="image/jpeg,image/png,image/webp,image/bmp,image/gif,image/avif,image/*"><button class="p" id="camb">📷 دوربین ×۳</button><input id="cam" type="file" accept="image/*" capture="environment">
-    <button id="hold">نگه دار = اصلی</button>
-    <button id="dl">ذخیره PNG</button><button id="sh">اشتراک‌گذاری</button>
-  </div>
-  <p class="mut" id="msg">عکس برد را انتخاب کنید. پردازش کاملاً روی دستگاه شما انجام می‌شود.</p>
-</div>
-<div class="card"><div class="view" id="view"><canvas id="c"></canvas></div>
-  <label style="margin-top:8px"><b>زوم <span id="zv">1×</span></b><input type="range" id="zoom" min="1" max="5" step="0.1" value="1"></label>
-</div>
-<div class="card">
-  <div class="row" style="margin-bottom:10px">
-    <button data-p="auto" class="pr on">خودکار</button>
-    <button data-p="neg" class="pr">نگاتیو</button>
-    <button data-p="heavy" class="pr">شدید</button>
-    <button data-p="heat" class="pr">حرارتی</button>
-    <button data-p="soft" class="pr">ملایم</button>
-  </div>
-  <div class="ctl">
-    <label><b>کانال</b><select id="ch"><option value="auto">خودکار (پرتضاد‌ترین)</option><option value="l">روشنایی</option><option value="r">قرمز</option><option value="g">سبز</option><option value="b">آبی</option></select></label>
-    <label><b>نمایش</b><select id="cm"><option value="gray">خاکستری</option><option value="heat">حرارتی</option><option value="color">رنگ حفظ‌شده</option></select></label>
-    <label><b>حذف سایه/نور ناهمگن <span id="v_ff"></span></b><input type="range" id="ff" min="0" max="120" value="40"></label>
-    <label><b>تضاد محلی (Wallis) – شعاع <span id="v_wr"></span></b><input type="range" id="wr" min="0" max="60" value="12"></label>
-    <label><b>تضاد محلی – قدرت <span id="v_wg"></span></b><input type="range" id="wg" min="0.5" max="6" step="0.1" value="2"></label>
-    <label><b>کف نویز <span id="v_nf"></span></b><input type="range" id="nf" min="1" max="30" value="6"></label>
-    <label><b>شارپ DoG – شعاع <span id="v_sr"></span></b><input type="range" id="sr" min="1" max="12" value="3"></label>
-    <label><b>شارپ DoG – مقدار <span id="v_sa"></span></b><input type="range" id="sa" min="0" max="5" step="0.1" value="1.2"></label>
-    <label><b>کاهش نویز <span id="v_dn"></span></b><input type="range" id="dn" min="0" max="3" value="1"></label>
-    <label><b>گاما <span id="v_gm"></span></b><input type="range" id="gm" min="0.4" max="2.5" step="0.05" value="1"></label>
-    <label><b>برش سیاه/سفید (%) <span id="v_cl"></span></b><input type="range" id="cl" min="0" max="10" step="0.1" value="1"></label>
-    <label><b>رزولوشن پردازش</b><select id="mx"><option value="1200">1200</option><option value="1600">1600</option><option value="2400" selected>2400</option><option value="3200">3200</option></select></label><label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="inv"><b>نگاتیو (وارونه)</b></label>
-  </div>
-</div>
-<div id="ov" style="display:none;position:fixed;inset:0;z-index:99;background:#000;flex-direction:column;color:#fff">
-<video id="vd" autoplay playsinline muted style="flex:1;min-height:0;width:100%;object-fit:contain"></video>
-<div style="padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;background:#111">
-<label style="color:#fff"><b style="color:#fff">زوم <span id="zt"></span></b><input type="range" id="zs" min="1" max="8" step="0.1" value="3"></label>
-<div class="row" style="justify-content:space-between"><button id="xc">بستن</button><button id="tb" style="display:none">🔦 فلش</button><label style="flex-direction:row;gap:4px;color:#fff"><input type="checkbox" id="fr">فریم زنده</label><button class="p" id="shot">عکس بگیر</button></div></div></div>
-<script>
-const $=id=>document.getElementById(id),cv=$('c'),ctx=cv.getContext('2d',{willReadFrequently:true});
-let W=0,H=0,orig=null,showOrig=false,tmr=null;
-const ids=['ff','wr','wg','nf','sr','sa','dn','gm','cl'];
-function box(a,w,h,r){r=r|0;if(r<1)return a.slice();const t=new Float32Array(a.length),o=new Float32Array(a.length),n=2*r+1;
- for(let y=0;y<h;y++){const b=y*w;let s=0;for(let k=-r;k<=r;k++)s+=a[b+Math.min(Math.max(k,0),w-1)];
-  for(let x=0;x<w;x++){t[b+x]=s/n;s+=a[b+Math.min(x+r+1,w-1)]-a[b+Math.max(x-r,0)];}}
- for(let x=0;x<w;x++){let s=0;for(let k=-r;k<=r;k++)s+=t[Math.min(Math.max(k,0),h-1)*w+x];
-  for(let y=0;y<h;y++){o[y*w+x]=s/n;s+=t[Math.min(y+r+1,h-1)*w+x]-t[Math.max(y-r,0)*w+x];}}
- return o}
-const gb=(a,w,h,r)=>box(box(a,w,h,r),w,h,r);
-function heat(v){const S=[[0,0,4],[87,16,110],[188,55,84],[249,142,9],[252,255,164]];const p=v/255*4,i=Math.min(3,p|0),f=p-i;return S[i].map((c,k)=>c+(S[i+1][k]-c)*f)}
-function run(){
- if(!orig)return;
- if(showOrig){ctx.putImageData(orig,0,0);return}
- const g=k=>+$(k).value;ids.forEach(k=>$('v_'+k).textContent=$(k).value);
- const d=orig.data,N=W*H,R=new Float32Array(N),G=new Float32Array(N),B=new Float32Array(N),L=new Float32Array(N);
- for(let i=0;i<N;i++){R[i]=d[4*i];G[i]=d[4*i+1];B[i]=d[4*i+2];L[i]=.299*R[i]+.587*G[i]+.114*B[i]}
- let v;const ch=$('ch').value;
- if(ch=='auto'){const sd=a=>{let s=0,q=0;for(let i=0;i<N;i+=7){s+=a[i];q+=a[i]*a[i]}const n=N/7,m=s/n;return q/n-m*m};
-  const c=[[sd(L),L],[sd(R),R],[sd(G),G],[sd(B),B]].sort((x,y)=>y[0]-x[0]);v=c[0][1].slice()}
- else v=({l:L,r:R,g:G,b:B})[ch].slice();
- if(g('dn')>0)v=box(v,W,H,g('dn'));
- if(g('ff')>0){const bg=gb(v,W,H,g('ff'));for(let i=0;i<N;i++)v[i]=v[i]/(bg[i]+8)*128}
- if(g('wr')>0){const m=box(v,W,H,g('wr')),sq=new Float32Array(N);for(let i=0;i<N;i++)sq[i]=v[i]*v[i];const m2=box(sq,W,H,g('wr')),k=g('nf')/4,gn=g('wg')*30;
-  for(let i=0;i<N;i++){const s=Math.sqrt(Math.max(m2[i]-m[i]*m[i],0));v[i]=(v[i]-m[i])/(s+k)*gn+128}}
- if(g('sa')>0){const b=gb(v,W,H,g('sr')),a=g('sa');for(let i=0;i<N;i++)v[i]+=(v[i]-b[i])*a}
- const hist=new Uint32Array(256);for(let i=0;i<N;i++){hist[Math.min(255,Math.max(0,v[i]|0))]++}
- const cut=N*g('cl')/100;let lo=0,hi=255,c=0;for(let i=0;i<256;i++){c+=hist[i];if(c>cut){lo=i;break}}c=0;for(let i=255;i>=0;i--){c+=hist[i];if(c>cut){hi=i;break}}
- if(hi<=lo)hi=lo+1;const gm=1/g('gm'),inv=$('inv').checked,cm=$('cm').value,out=ctx.createImageData(W,H),o=out.data;
- for(let i=0;i<N;i++){let t=(v[i]-lo)/(hi-lo);t=t<0?0:t>1?1:t;t=Math.pow(t,gm);if(inv)t=1-t;const y=t*255;
-  let r,gg,b;
-  if(cm=='heat')[r,gg,b]=heat(y);
-  else if(cm=='color'){const l=L[i]+4,k=y/l*1.0;r=R[i]*k;gg=G[i]*k;b=B[i]*k}
-  else r=gg=b=y;
-  o[4*i]=r;o[4*i+1]=gg;o[4*i+2]=b;o[4*i+3]=255}
- ctx.putImageData(out,0,0)}
-const sched=()=>{clearTimeout(tmr);tmr=setTimeout(run,60)};
-document.querySelectorAll('input[type=range],select,#inv').forEach(e=>{e.addEventListener('input',sched);if(e.id!='mx')e.addEventListener('input',()=>document.querySelectorAll('.pr').forEach(x=>x.classList.remove('on')))});
-const P={auto:{ch:'auto',cm:'gray',ff:40,wr:12,wg:2,nf:6,sr:3,sa:1.2,dn:1,gm:1,cl:1,inv:0},
- neg:{ch:'auto',cm:'gray',ff:50,wr:10,wg:2.2,nf:5,sr:2,sa:1.5,dn:1,gm:1,cl:1,inv:1},
- heavy:{ch:'auto',cm:'gray',ff:30,wr:7,wg:4,nf:3,sr:2,sa:2.5,dn:1,gm:0.9,cl:0.5,inv:0},
- heat:{ch:'auto',cm:'heat',ff:40,wr:10,wg:3,nf:5,sr:3,sa:1.5,dn:1,gm:1,cl:1,inv:0},
- soft:{ch:'l',cm:'color',ff:60,wr:20,wg:1.2,nf:10,sr:4,sa:0.6,dn:1,gm:1,cl:0.5,inv:0}};
-document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.pr').forEach(x=>x.classList.toggle('on',x===b));const p=P[b.dataset.p];for(const k in p){const e=$(k);if(k=='inv')e.checked=!!p[k];else e.value=p[k]}run()});
-async function load(e){const f=e.target.files[0];e.target.value='';if(!f)return;window._lf=f;let im;
- try{im=await createImageBitmap(f,{imageOrientation:'from-image'})}catch(_){try{im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=URL.createObjectURL(f)})}catch(_2){$('msg').textContent='این فرمت پشتیبانی نمی‌شود (HEIC/RAW؟). در دوربین فرمت را روی JPEG بگذارید.';return}}
- const w0=im.width,h0=im.height,s=Math.min(1,+$('mx').value/Math.max(w0,h0));W=Math.round(w0*s);H=Math.round(h0*s);cv.width=W;cv.height=H;ctx.drawImage(im,0,0,W,H);orig=ctx.getImageData(0,0,W,H);
- $('msg').textContent=W+'×'+H+' (اصل '+w0+'×'+h0+') — اسلایدرها را تنظیم کنید یا یک پریست بزنید.';run()}
-$('f').onchange=load;$('cam').onchange=load;$('mx').onchange=()=>window._lf&&load({target:{files:[window._lf]}});
-let stream=null,track=null,torch=false;
-const ov=$('ov'),vd=$('vd');
-function closeCam(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=track=null;torch=false;ov.style.display='none'}
-async function openCam(){
- const V={width:{ideal:4096},height:{ideal:3072}};
- try{try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:'environment'},...V},audio:false})}
-  catch(_){stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',...V},audio:false})}}
- catch(_){$('cam').click();return}
- track=stream.getVideoTracks()[0];vd.srcObject=stream;ov.style.display='flex';
- const c=track.getCapabilities?track.getCapabilities():{},zs=$('zs');
- if(c.zoom){const z=Math.min(Math.max(3,c.zoom.min),c.zoom.max);zs.min=c.zoom.min;zs.max=c.zoom.max;zs.step=c.zoom.step||0.1;zs.value=z;zs.disabled=false;
-  await track.applyConstraints({advanced:[{zoom:z}]}).catch(()=>{});$('zt').textContent=z.toFixed(1)+'×'+(z<3?' (حداکثر دستگاه)':'')}
- else{zs.disabled=true;$('zt').textContent='زوم سخت‌افزاری پشتیبانی نمی‌شود'}
- if(c.focusMode&&c.focusMode.includes('continuous'))track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
- $('tb').style.display=c.torch?'':'none'}
-$('camb').onclick=()=>window.Android?Android.openCamera():openCam();
-let _nb=[];window.nativeChunk=x=>_nb.push(x);
-window.nativeDone=()=>{const bin=atob(_nb.join(''));_nb=[];const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);load({target:{files:[new Blob([u],{type:'image/jpeg'})]}})};$('xc').onclick=closeCam;
-$('zs').oninput=e=>{const z=+e.target.value;track&&track.applyConstraints({advanced:[{zoom:z}]}).catch(()=>{});$('zt').textContent=z.toFixed(1)+'×'};
-$('tb').onclick=()=>{torch=!torch;track&&track.applyConstraints({advanced:[{torch}]}).catch(()=>{})};
-$('shot').onclick=async()=>{let blob;
- try{if(!$('fr').checked&&window.ImageCapture)blob=await new ImageCapture(track).takePhoto()}catch(_){}
- if(!blob){const c=document.createElement('canvas');c.width=vd.videoWidth;c.height=vd.videoHeight;c.getContext('2d').drawImage(vd,0,0);blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.95))}
- closeCam();load({target:{files:[blob]}})};
-$('sh').onclick=()=>{if(!orig)return;cv.toBlob(async b=>{const file=new File([b],'pcb-enhanced.png',{type:'image/png'});try{if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:'PCB enhanced'});else $('dl').click()}catch(_){}},'image/png')};
-const h=$('hold');const on=v=>e=>{e.preventDefault();showOrig=v;run()};
-['pointerdown'].forEach(t=>h.addEventListener(t,on(true)));['pointerup','pointerleave','pointercancel'].forEach(t=>h.addEventListener(t,on(false)));
-$('zoom').oninput=e=>{cv.style.width=e.target.value*100+'%';$('zv').textContent=e.target.value+'×'};
-$('dl').onclick=()=>{if(!orig)return;if(window.Android){Android.saveImage(cv.toDataURL('image/png').split(',')[1]);return}const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='pcb-enhanced.png';a.click()};
-</script>
+<body class="h-screen w-screen flex flex-col font-sans select-none">
+
+    <!-- ================= TOP HEADER BAR ================= -->
+    <header class="h-14 bg-pcb-panel/95 backdrop-blur-md border-b border-pcb-border px-3 sm:px-5 flex items-center justify-between z-30 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-pcb-neon neon-glow">
+                <i class="ph-bold ph-cpu text-2xl"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="font-bold text-sm sm:text-base tracking-wide text-white">PCB Trace Enhancer</h1>
+                    <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-pcb-neon border border-emerald-500/30 font-semibold">PRO v3.2</span>
+                </div>
+                <p class="text-[11px] text-slate-400 hidden sm:block">سیستم هوشمند استخراج، فیلترینگ و ردیابی خطوط مدار چاپی</p>
+            </div>
+        </div>
+
+        <div class="hidden xl:flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+            <button onclick="loadDemoPCB('motherboard')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+                <i class="ph ph-circuitry text-emerald-400"></i> نمونه برد سبز (SMD)
+            </button>
+            <button onclick="loadDemoPCB('power')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+                <i class="ph ph-lightning text-amber-400"></i> نمونه برد تغذیه (مسی)
+            </button>
+            <button onclick="loadDemoPCB('multilayer')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+                <i class="ph ph-stack text-cyan-400"></i> نمونه برد موبایل (BGA)
+            </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+            
+            <button onclick="document.getElementById('fileInput').click()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs sm:text-sm font-medium text-slate-200 flex items-center gap-1.5 transition" title="بارگذاری تصویر برد">
+                <i class="ph-bold ph-upload-simple text-emerald-400 text-base"></i>
+                <span class="hidden sm:inline">بارگذاری عکس</span>
+            </button>
+
+            <button onclick="openCameraModal()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs sm:text-sm font-medium text-slate-200 flex items-center gap-1.5 transition" title="اسکن مستقیم با دوربین">
+                <i class="ph-bold ph-camera text-cyan-400 text-base"></i>
+                <span class="hidden sm:inline">دوربین زنده</span>
+            </button>
+
+            <button onclick="exportEnhancedImage()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 transition">
+                <i class="ph-bold ph-download-simple text-base"></i>
+                <span class="hidden md:inline">خروجی عکس</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ================= MAIN WORKSPACE ================= -->
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+
+        <div class="flex-1 relative pcb-grid-bg overflow-hidden flex items-center justify-center" id="viewportContainer">
+            
+            <div class="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-slate-900/90 backdrop-blur-md px-2 py-1.5 rounded-2xl border border-slate-700/80 shadow-2xl">
+                <button id="toolPan" onclick="setInteractionTool('pan')" class="active-tool px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition">
+                    <i class="ph-bold ph-hand-grabbing text-sm"></i>
+                    <span>جابجایی و زوم</span>
+                </button>
+                <button id="toolLoupe" onclick="setInteractionTool('loupe')" class="px-3 py-1.5 rounded-xl text-xs text-slate-300 hover:bg-slate-800 flex items-center gap-1.5 transition">
+                    <i class="ph-bold ph-magnifying-glass-plus text-sm text-cyan-400"></i>
+                    <span>ذره‌بین اشعه ایکس</span>
+                </button>
+                <button id="toolTrace" onclick="setInteractionTool('trace')" class="px-3 py-1.5 rounded-xl text-xs text-slate-300 hover:bg-slate-800 flex items-center gap-1.5 transition">
+                    <i class="ph-bold ph-pen-nib text-sm text-amber-400"></i>
+                    <span>مارکر مسیر</span>
+                </button>
+                <button id="toolPin" onclick="setInteractionTool('pin')" class="px-3 py-1.5 rounded-xl text-xs text-slate-300 hover:bg-slate-800 flex items-center gap-1.5 transition">
+                    <i class="ph-bold ph-map-pin text-sm text-rose-400"></i>
+                    <span>تست‌پوینت</span>
+                </button>
+                <div class="h-4 w-[1px] bg-slate-700 mx-1"></div>
+                <button id="btnCompareHold" 
+                    onmousedown="toggleOriginalPreview(true)" onmouseup="toggleOriginalPreview(false)" onmouseleave="toggleOriginalPreview(false)"
+                    ontouchstart="toggleOriginalPreview(true)" ontouchend="toggleOriginalPreview(false)"
+                    class="px-3 py-1.5 rounded-xl text-xs bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 transition">
+                    <i class="ph-bold ph-eye text-sm"></i>
+                    <span class="hidden sm:inline">نگه دارید: تصویر اصلی</span>
+                </button>
+            </div>
+
+            <div id="annotationSubBar" class="hidden absolute top-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-slate-900/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700 shadow-xl">
+                <span class="text-[11px] text-slate-400 ml-1">رنگ خط/پین:</span>
+                <button onclick="setMarkerColor('#00f59b')" class="w-5 h-5 rounded-full bg-[#00f59b] ring-2 ring-white scale-110 transition marker-swatch" data-color="#00f59b"></button>
+                <button onclick="setMarkerColor('#f43f5e')" class="w-5 h-5 rounded-full bg-[#f43f5e] opacity-80 hover:opacity-100 transition marker-swatch" data-color="#f43f5e"></button>
+                <button onclick="setMarkerColor('#38bdf8')" class="w-5 h-5 rounded-full bg-[#38bdf8] opacity-80 hover:opacity-100 transition marker-swatch" data-color="#38bdf8"></button>
+                <button onclick="setMarkerColor('#facc15')" class="w-5 h-5 rounded-full bg-[#facc15] opacity-80 hover:opacity-100 transition marker-swatch" data-color="#facc15"></button>
+                <div class="h-4 w-[1px] bg-slate-700 mx-1"></div>
+                <button onclick="undoAnnotation()" class="text-xs text-slate-300 hover:text-white flex items-center gap-1 px-2 py-1 rounded bg-slate-800">
+                    <i class="ph ph-arrow-u-up-left"></i> بازگشت
+                </button>
+                <button onclick="clearAnnotations()" class="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 px-2 py-1 rounded bg-rose-950/50 border border-rose-800/50">
+                    <i class="ph ph-trash"></i> پاکسازی
+                </button>
+            </div>
+
+            <div id="canvasTransformLayer" class="origin-center will-change-transform cursor-grab active:cursor-grabbing relative shadow-2xl">
+                <canvas id="pcbCanvas" class="block rounded-lg border border-slate-700/80 shadow-2xl"></canvas>
+                <canvas id="overlayCanvas" class="absolute inset-0 pointer-events-none rounded-lg"></canvas>
+            </div>
+
+            <div id="xrayLoupe" class="hidden pointer-events-none absolute w-44 h-44 rounded-full border-2 border-pcb-neon shadow-[0_0_25px_rgba(0,245,155,0.5)] overflow-hidden z-30 bg-black">
+                <canvas id="loupeCanvas" width="176" height="176" class="w-full h-full"></canvas>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-4 h-[1px] bg-pcb-neon/70"></div>
+                    <div class="h-4 w-[1px] bg-pcb-neon/70 absolute"></div>
+                </div>
+                <span class="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[9px] font-mono bg-slate-950/90 text-pcb-neon px-1.5 py-0.5 rounded border border-emerald-500/30">2.5x X-RAY</span>
+            </div>
+
+            <div class="absolute bottom-3 inset-x-3 flex items-center justify-between pointer-events-none z-20">
+                <div class="pointer-events-auto bg-slate-900/90 backdrop-blur-md border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-3 text-[11px] font-mono text-slate-300 shadow-lg">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-pcb-neon animate-pulse"></span>
+                        <span id="hudResolution">1100×740 px</span>
+                    </div>
+                    <div class="hidden sm:flex items-center gap-1.5 border-r border-slate-700 pr-3">
+                        <span class="text-slate-500">X/Y:</span>
+                        <span id="hudCoords" class="text-emerald-400">0, 0</span>
+                    </div>
+                    <div class="hidden md:flex items-center gap-1.5 border-r border-slate-700 pr-3">
+                        <span class="text-slate-500">زمان پردازش:</span>
+                        <span id="hudPerf" class="text-cyan-400">12 ms</span>
+                    </div>
+                </div>
+
+                <div class="pointer-events-auto flex items-center gap-1 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-1 rounded-xl shadow-lg">
+                    <button onclick="mirrorBottomLayer()" id="btnMirror" class="px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-slate-800 flex items-center gap-1 transition" title="قرینه‌سازی افقی برای تطبیق لایه زیرین و رویی برد">
+                        <i class="ph-bold ph-flip-horizontal text-amber-400 text-sm"></i>
+                        <span class="hidden sm:inline">قرینه (لایه زیرین)</span>
+                    </button>
+                    <div class="h-4 w-[1px] bg-slate-700 mx-0.5"></div>
+                    <button onclick="adjustZoom(-0.25)" class="w-7 h-7 rounded-lg hover:bg-slate-800 text-slate-300 flex items-center justify-center transition">
+                        <i class="ph-bold ph-minus"></i>
+                    </button>
+                    <button onclick="resetViewport()" id="zoomPercentLabel" class="px-2 text-xs font-mono text-pcb-neon hover:underline">
+                        100%
+                    </button>
+                    <button onclick="adjustZoom(0.25)" class="w-7 h-7 rounded-lg hover:bg-slate-800 text-slate-300 flex items-center justify-center transition">
+                        <i class="ph-bold ph-plus"></i>
+                    </button>
+                    <button onclick="resetViewport()" class="w-7 h-7 rounded-lg hover:bg-slate-800 text-slate-300 flex items-center justify-center transition" title="تنظیم در مرکز">
+                        <i class="ph-bold ph-corners-out"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= RIGHT SIDEBAR: CONTROL PANEL ================= -->
+        <aside class="w-full lg:w-96 h-[46vh] lg:h-full bg-pcb-panel border-t lg:border-t-0 lg:border-r border-pcb-border flex flex-col z-20 shrink-0">
+            
+            <div class="grid grid-cols-3 border-b border-pcb-border bg-slate-950/60 p-1 gap-1 shrink-0">
+                <button onclick="switchSidebarTab('presets')" id="tabBtn-presets" class="py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 bg-slate-800 text-pcb-neon border border-emerald-500/30 transition">
+                    <i class="ph-bold ph-magic-wand text-sm"></i>
+                    <span>مودهای هوشمند</span>
+                </button>
+                <button onclick="switchSidebarTab('filters')" id="tabBtn-filters" class="py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition">
+                    <i class="ph-bold ph-sliders-horizontal text-sm"></i>
+                    <span>تنظیمات دقیق</span>
+                </button>
+                <button onclick="switchSidebarTab('analysis')" id="tabBtn-analysis" class="py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition">
+                    <i class="ph-bold ph-chart-bar text-sm"></i>
+                    <span>آنالیز و تست‌پوینت</span>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-5">
+
+                <div id="tabContent-presets" class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                            <i class="ph-fill ph-sparkle text-pcb-neon"></i>
+                            پروفایل‌های آماده استخراج مسیر
+                        </h2>
+                        <button onclick="applyPreset('default')" class="text-[11px] text-rose-400 hover:underline flex items-center gap-1">
+                            <i class="ph ph-arrow-counter-clockwise"></i> بازنشانی
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button onclick="applyPreset('copperBoost')" id="preset-copperBoost" class="active-preset group p-3 rounded-xl bg-slate-800/60 border border-slate-700 hover:border-emerald-500/50 text-right transition flex flex-col justify-between h-24">
+                            <div class="flex items-center justify-between w-full">
+                                <span class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                                    <i class="ph-bold ph-circuitry text-lg"></i>
+                                </span>
+                                <span class="text-[10px] font-mono text-slate-400">DEFAULT</span>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-white">تقویت مسیر مس</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">افزایش وضوح خطوط زیر چاپ سبز</div>
+                            </div>
+                        </button>
+
+                        <button onclick="applyPreset('solderMaskStrip')" id="preset-solderMaskStrip" class="group p-3 rounded-xl bg-slate-800/60 border border-slate-700 hover:border-emerald-500/50 text-right transition flex flex-col justify-between h-24">
+                            <div class="flex items-center justify-between w-full">
+                                <span class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400">
+                                    <i class="ph-bold ph-selection-background text-lg"></i>
+                                </span>
+                                <span class="text-[10px] font-mono text-cyan-400">MASK-OFF</span>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-white">حذف رنگ محافظ</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">جداسازی کانال سبز/آبی برد</div>
+                            </div>
+                        </button>
+
+                        <button onclick="applyPreset('edgeSkeleton')" id="preset-edgeSkeleton" class="group p-3 rounded-xl bg-slate-800/60 border border-slate-700 hover:border-emerald-500/50 text-right transition flex flex-col justify-between h-24">
+                            <div class="flex items-center justify-between w-full">
+                                <span class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
+                                    <i class="ph-bold ph-graph text-lg"></i>
+                                </span>
+                                <span class="text-[10px] font-mono text-amber-400">SOBEL AI</span>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-white">ردیاب لبه (Sobel)</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">تشخیص مرزهای پدها و خطوط ظریف</div>
+                            </div>
+                        </button>
+
+                        <button onclick="applyPreset('binaryBlueprint')" id="preset-binaryBlueprint" class="group p-3 rounded-xl bg-slate-800/60 border border-slate-700 hover:border-emerald-500/50 text-right transition flex flex-col justify-between h-24">
+                            <div class="flex items-center justify-between w-full">
+                                <span class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400">
+                                    <i class="ph-bold ph-binary text-lg"></i>
+                                </span>
+                                <span class="text-[10px] font-mono text-purple-400">1-BIT CAD</span>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-white">شماتیک سیاه‌وسفید</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">باینری‌سازی جهت مهندسی معکوس</div>
+                            </div>
+                        </button>
+
+                        <button onclick="applyPreset('thermalXray')" id="preset-thermalXray" class="group p-3 rounded-xl bg-slate-800/60 border border-slate-700 hover:border-emerald-500/50 text-right transition flex flex-col justify-between h-24">
+                            <div class="flex items-center justify-between w-full">
+                                <span class="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-400">
+                                    <i class="ph-bold ph-fire text-lg"></i>
+                                </span>
+                                <span class="text-[10px] font-mono text-rose-400">THERMAL</span>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-white">طیف حرارتی مس</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">رنگ‌آمیزی کاذب بر اساس تراکم مس</div>
+                            </div>
+                        </button>
+
+                        <button onclick="applyPreset('glareKiller')" id="preset-glareKiller" class="group p-3 rounded-xl bg-slate-800/60 border border-slate-700 hover:border-emerald-500/50 text-right transition flex flex-col justify-between h-24">
+                            <div class="flex items-center justify-between w-full">
+                                <span class="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal-400">
+                                    <i class="ph-bold ph-sun-dim text-lg"></i>
+                                </span>
+                                <span class="text-[10px] font-mono text-teal-400">DE-GLARE</span>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-white">حذف بازتاب فلش</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">متعادل‌سازی نقاط سوخته و تاریک</div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2.5">
+                        <label class="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                            <span>تفکیک کانال رنگی برد (Color Matrix):</span>
+                            <span id="channelLabel" class="text-[10px] font-mono text-pcb-neon">RGB FULL</span>
+                        </label>
+                        <div class="grid grid-cols-4 gap-1.5">
+                            <button onclick="setChannelMode('rgb')" id="chan-rgb" class="py-1.5 rounded-lg text-xs font-mono bg-emerald-500/20 text-pcb-neon border border-emerald-500/40">RGB</button>
+                            <button onclick="setChannelMode('g')" id="chan-g" class="py-1.5 rounded-lg text-xs font-mono bg-slate-800 text-emerald-400 hover:bg-slate-700">Green</button>
+                            <button onclick="setChannelMode('r')" id="chan-r" class="py-1.5 rounded-lg text-xs font-mono bg-slate-800 text-rose-400 hover:bg-slate-700">Red/Cu</button>
+                            <button onclick="setChannelMode('b')" id="chan-b" class="py-1.5 rounded-lg text-xs font-mono bg-slate-800 text-sky-400 hover:bg-slate-700">Blue</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tabContent-filters" class="hidden space-y-4">
+                    <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5 space-y-3.5">
+                        <div class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                            <i class="ph-bold ph-sliders"></i> تقویت ساختار مسیر و پدها
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">تقویت برجستگی خطوط (Trace Boost)</span>
+                                <span id="val-traceBoost" class="font-mono text-pcb-neon">45%</span>
+                            </div>
+                            <input type="range" id="ctrl-traceBoost" min="0" max="100" value="45" oninput="updateFilterParams()">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">آشکارساز لبه‌های مس (Sobel Edge)</span>
+                                <span id="val-edgeStrength" class="font-mono text-pcb-neon">20%</span>
+                            </div>
+                            <input type="range" id="ctrl-edgeStrength" min="0" max="100" value="20" oninput="updateFilterParams()">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">فیلتر رنگ چاپ مدار (Mask Filter)</span>
+                                <span id="val-maskSuppress" class="font-mono text-pcb-neon">30%</span>
+                            </div>
+                            <input type="range" id="ctrl-maskSuppress" min="0" max="100" value="30" oninput="updateFilterParams()">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5 space-y-3.5">
+                        <div class="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
+                            <i class="ph-bold ph-sun-horizon"></i> نورپردازی و کنتراست دینامیک
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">کنتراست (Contrast)</span>
+                                <span id="val-contrast" class="font-mono text-cyan-400">+35</span>
+                            </div>
+                            <input type="range" id="ctrl-contrast" min="-100" max="100" value="35" oninput="updateFilterParams()">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">روشنایی (Brightness)</span>
+                                <span id="val-brightness" class="font-mono text-cyan-400">+5</span>
+                            </div>
+                            <input type="range" id="ctrl-brightness" min="-100" max="100" value="5" oninput="updateFilterParams()">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">اصلاح گاما و سایه‌ها (Gamma)</span>
+                                <span id="val-gamma" class="font-mono text-cyan-400">1.15</span>
+                            </div>
+                            <input type="range" id="ctrl-gamma" min="40" max="250" value="115" oninput="updateFilterParams()">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                                <i class="ph-bold ph-scales"></i> آستانه‌گذاری دودویی (Threshold)
+                            </span>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="ctrl-binaryEnable" class="sr-only peer" onchange="updateFilterParams()">
+                                <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all relative peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+
+                        <div id="thresholdSliderBox" class="opacity-40 pointer-events-none transition">
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">حد آستانه جداسازی</span>
+                                <span id="val-threshold" class="font-mono text-amber-400">128</span>
+                            </div>
+                            <input type="range" id="ctrl-threshold" min="10" max="245" value="128" oninput="updateFilterParams()">
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+                            <span class="text-xs text-slate-300">نگاتیو کردن تصویر (Invert Colors)</span>
+                            <input type="checkbox" id="ctrl-invert" class="w-4 h-4 accent-emerald-500 rounded cursor-pointer" onchange="updateFilterParams()">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tabContent-analysis" class="hidden space-y-4">
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                <i class="ph-bold ph-chart-line-up text-pcb-neon"></i> هیستوگرام توزیع روشنایی و مس
+                            </span>
+                            <span class="text-[10px] font-mono text-slate-400">LIVE</span>
+                        </div>
+                        <canvas id="histogramCanvas" width="320" height="100" class="w-full h-24 bg-slate-950 rounded-lg border border-slate-800/80"></canvas>
+                        <div class="flex justify-between text-[10px] font-mono text-slate-400">
+                            <span>0 (سایه/سوراخ‌ها)</span>
+                            <span>128 (چاپ برد)</span>
+                            <span>255 (مس/پدهای قلع)</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                <i class="ph-bold ph-map-pin-line text-rose-400"></i> لیست تست‌پوینت‌ها و مسیرها
+                            </span>
+                            <span id="pinCountBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-pcb-neon">0 مورد</span>
+                        </div>
+                        <div id="annotationsList" class="max-h-36 overflow-y-auto space-y-1.5 text-xs text-slate-400">
+                            <div class="text-center py-4 text-slate-500 text-[11px]">
+                                با انتخاب ابزار «مارکر مسیر» یا «تست‌پوینت» در بالای صفحه، خطوط مدار را علامت‌گذاری کنید.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+    </main>
+
+    <!-- ================= LIVE CAMERA MODAL ================= -->
+    <div id="cameraModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="bg-pcb-panel border border-slate-700 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl">
+            <div class="p-3.5 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="ph-bold ph-camera text-pcb-neon text-lg"></i>
+                    <span class="font-bold text-sm">اسکنر مستقیم برد مدار چاپی</span>
+                </div>
+                <button onclick="closeCameraModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400">
+                    <i class="ph-bold ph-x"></i>
+                </button>
+            </div>
+            <div class="relative bg-black aspect-video flex items-center justify-center overflow-hidden">
+                <video id="cameraVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+                <div class="absolute inset-6 border-2 border-dashed border-pcb-neon/60 rounded-xl pointer-events-none flex items-center justify-center">
+                    <span class="bg-slate-950/80 text-pcb-neon text-[11px] px-2.5 py-1 rounded-full border border-emerald-500/30">
+                        برد را داخل کادر قرار دهید
+                    </span>
+                </div>
+            </div>
+            <div class="p-4 flex items-center justify-end gap-2 bg-slate-900">
+                <button onclick="closeCameraModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-medium">انصراف</button>
+                <button onclick="captureCameraFrame()" class="px-5 py-2 rounded-xl bg-pcb-neon text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/20">
+                    <i class="ph-bold ph-aperture text-base"></i> ثبت و پردازش آنی
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= TOAST NOTIFICATION ================= -->
+    <div id="toastBox" class="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 translate-y-2 transition-all duration-300 bg-slate-900/95 border border-emerald-500/50 text-white px-4 py-2 rounded-xl shadow-2xl flex items-center gap-2 text-xs">
+        <i class="ph-fill ph-check-circle text-pcb-neon text-base"></i>
+        <span id="toastText">عملیات با موفقیت انجام شد</span>
+    </div>
+
+    <script>
+        const state = {
+            sourceCanvas: document.createElement('canvas'),
+            pcbCanvas: document.getElementById('pcbCanvas'),
+            overlayCanvas: document.getElementById('overlayCanvas'),
+            loupeCanvas: document.getElementById('loupeCanvas'),
+            zoom: 1,
+            panX: 0,
+            panY: 0,
+            isMirrored: false,
+            isDragging: false,
+            dragStartX: 0,
+            dragStartY: 0,
+            tool: 'pan',
+            showOriginal: false,
+            channelMode: 'rgb',
+            preset: 'copperBoost',
+            markerColor: '#00f59b',
+            annotations: [],
+            activeTrace: null,
+            cameraStream: null,
+            params: {
+                traceBoost: 45,
+                edgeStrength: 20,
+                maskSuppress: 30,
+                contrast: 35,
+                brightness: 5,
+                gamma: 1.15,
+                binaryEnable: false,
+                threshold: 128,
+                invert: false
+            }
+        };
+
+        function generateSyntheticPCB(style = 'motherboard') {
+            const width = 1100;
+            const height = 740;
+            state.sourceCanvas.width = width;
+            state.sourceCanvas.height = height;
+            const ctx = state.sourceCanvas.getContext('2d');
+
+            const palettes = {
+                motherboard: {
+                    bg1: '#063b27', bg2: '#04281a',
+                    traceHidden: '#156c47', traceBright: '#249161',
+                    padColor: '#d4af37', viaRing: '#cbd5e1', silk: '#e2e8f0'
+                },
+                power: {
+                    bg1: '#4c1d06', bg2: '#2e1003',
+                    traceHidden: '#8a3c12', traceBright: '#b8561d',
+                    padColor: '#e2e8f0', viaRing: '#fbbf24', silk: '#fef3c7'
+                },
+                multilayer: {
+                    bg1: '#0a2540', bg2: '#061527',
+                    traceHidden: '#154675', traceBright: '#1d63a1',
+                    padColor: '#facc15', viaRing: '#94a3b8', silk: '#f1f5f9'
+                }
+            };
+            const pal = palettes[style] || palettes.motherboard;
+
+            const grad = ctx.createRadialGradient(width * 0.45, height * 0.45, 50, width * 0.5, height * 0.5, width * 0.7);
+            grad.addColorStop(0, pal.bg1);
+            grad.addColorStop(1, pal.bg2);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.fillStyle = pal.traceHidden;
+            ctx.globalAlpha = 0.35;
+            ctx.fillRect(40, 40, 320, 260);
+            ctx.fillRect(720, 420, 340, 280);
+            ctx.globalAlpha = 1.0;
+
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            const cx = width / 2;
+            const cy = height / 2;
+
+            for (let i = -14; i <= 14; i++) {
+                const offset = i * 9;
+                ctx.strokeStyle = (i % 3 === 0) ? pal.traceBright : pal.traceHidden;
+                ctx.lineWidth = (i % 5 === 0) ? 5 : 2.5;
+
+                ctx.beginPath();
+                ctx.moveTo(cx - 95, cy + offset);
+                ctx.lineTo(cx - 210, cy + offset);
+                ctx.lineTo(cx - 260, cy + offset + (i * 7));
+                ctx.lineTo(90, cy + offset + (i * 7));
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(cx + 95, cy + offset);
+                ctx.lineTo(cx + 220, cy + offset);
+                ctx.lineTo(cx + 280, cy + offset - (i * 6));
+                ctx.lineTo(width - 90, cy + offset - (i * 6));
+                ctx.stroke();
+            }
+
+            for (let i = -12; i <= 12; i++) {
+                const offset = i * 10;
+                ctx.strokeStyle = (i % 2 === 0) ? pal.traceHidden : pal.traceBright;
+                ctx.lineWidth = (Math.abs(i) === 6) ? 6 : 2.5;
+
+                ctx.beginPath();
+                ctx.moveTo(cx + offset, cy - 95);
+                ctx.lineTo(cx + offset, cy - 190);
+                ctx.lineTo(cx + offset + (i * 9), 70);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(cx + offset, cy + 95);
+                ctx.lineTo(cx + offset, cy + 185);
+                ctx.lineTo(cx + offset - (i * 8), height - 70);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = '#111827';
+            ctx.fillRect(cx - 72, cy - 72, 144, 144);
+            ctx.strokeStyle = pal.silk;
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(cx - 76, cy - 76, 152, 152);
+
+            ctx.fillStyle = pal.silk;
+            ctx.beginPath();
+            ctx.arc(cx - 56, cy - 56, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = 'bold 13px "JetBrains Mono", monospace';
+            ctx.fillText('U101 - STM32F407', cx - 60, cy - 2);
+            ctx.font = '11px "JetBrains Mono", monospace';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('ARM CORTEX-M4', cx - 50, cy + 16);
+
+            ctx.fillStyle = pal.padColor;
+            for (let i = -14; i <= 14; i++) {
+                const p = i * 4.5;
+                ctx.fillRect(cx - 94, cy + p - 1.5, 16, 3);
+                ctx.fillRect(cx + 78, cy + p - 1.5, 16, 3);
+                ctx.fillRect(cx + p - 1.5, cy - 94, 3, 16);
+                ctx.fillRect(cx + p - 1.5, cy + 78, 3, 16);
+            }
+
+            for (let v = 0; v < 85; v++) {
+                const vx = 80 + ((v * 137) % (width - 160));
+                const vy = 70 + ((v * 293) % (height - 140));
+                if (Math.abs(vx - cx) < 115 && Math.abs(vy - cy) < 115) continue;
+
+                ctx.fillStyle = pal.viaRing;
+                ctx.beginPath();
+                ctx.arc(vx, vy, 5.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#05080f';
+                ctx.beginPath();
+                ctx.arc(vx, vy, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const glare = ctx.createRadialGradient(width * 0.28, height * 0.3, 5, width * 0.28, height * 0.3, 140);
+            glare.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
+            glare.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = glare;
+            ctx.fillRect(0, 0, width, height);
+
+            state.pcbCanvas.width = width;
+            state.pcbCanvas.height = height;
+            state.overlayCanvas.width = width;
+            state.overlayCanvas.height = height;
+            document.getElementById('hudResolution').textContent = `${width}×${height} px`;
+        }
+
+        function runEnhancementPipeline() {
+            const t0 = performance.now();
+            const width = state.sourceCanvas.width;
+            const height = state.sourceCanvas.height;
+            if (!width || !height) return;
+
+            const srcCtx = state.sourceCanvas.getContext('2d');
+            const dstCtx = state.pcbCanvas.getContext('2d');
+
+            const srcData = srcCtx.getImageData(0, 0, width, height);
+            const src = srcData.data;
+
+            if (state.showOriginal) {
+                dstCtx.putImageData(srcData, 0, 0);
+                updateHistogram(src);
+                return;
+            }
+
+            const outData = dstCtx.createImageData(width, height);
+            const dst = outData.data;
+
+            const p = state.params;
+            const contrastFactor = (259 * (p.contrast + 255)) / (255 * (259 - p.contrast));
+            const invGamma = 1.0 / p.gamma;
+            const traceGain = p.traceBoost / 25.0;
+            const maskSupp = p.maskSuppress / 100.0;
+            const edgeMix = p.edgeStrength / 100.0;
+
+            const gammaLUT = new Uint8ClampedArray(256);
+            for (let i = 0; i < 256; i++) {
+                gammaLUT[i] = Math.pow(i / 255.0, invGamma) * 255.0;
+            }
+
+            const lum = new Float32Array(width * height);
+
+            for (let i = 0, j = 0; i < src.length; i += 4, j++) {
+                let r = src[i];
+                let g = src[i + 1];
+                let b = src[i + 2];
+
+                const maskDiff = Math.max(0, g - Math.max(r, b));
+                g = g - maskDiff * maskSupp * 0.6;
+                r = Math.min(255, r + maskDiff * maskSupp * 0.45);
+
+                lum[j] = 0.299 * r + 0.587 * g + 0.114 * b;
+            }
+
+            for (let y = 0; y < height; y++) {
+                const yOffset = y * width;
+                const isBorderY = (y <= 1 || y >= height - 2);
+
+                for (let x = 0; x < width; x++) {
+                    const idx = yOffset + x;
+                    const pIdx = idx * 4;
+
+                    let r = src[pIdx];
+                    let g = src[pIdx + 1];
+                    let b = src[pIdx + 2];
+
+                    if (maskSupp > 0) {
+                        const greenExcess = Math.max(0, g - (r + b) * 0.5);
+                        g = g - greenExcess * maskSupp * 0.75;
+                        r = r + greenExcess * maskSupp * 0.55;
+                        b = b + greenExcess * maskSupp * 0.25;
+                    }
+
+                    let highPass = 0;
+                    let sobelMag = 0;
+
+                    if (!isBorderY && x > 1 && x < width - 2) {
+                        const centerL = lum[idx];
+                        const localAvg = (
+                            lum[idx - 2] + lum[idx + 2] +
+                            lum[idx - width * 2] + lum[idx + width * 2]
+                        ) * 0.25;
+                        highPass = (centerL - localAvg) * traceGain;
+
+                        if (edgeMix > 0) {
+                            const gx = -lum[idx - width - 1] + lum[idx - width + 1]
+                                       - 2 * lum[idx - 1] + 2 * lum[idx + 1]
+                                       - lum[idx + width - 1] + lum[idx + width + 1];
+                            const gy = -lum[idx - width - 1] - 2 * lum[idx - width] - lum[idx - width + 1]
+                                       + lum[idx + width - 1] + 2 * lum[idx + width] + lum[idx + width + 1];
+                            sobelMag = Math.min(255, Math.sqrt(gx * gx + gy * gy)) * edgeMix;
+                        }
+                    }
+
+                    r += highPass + sobelMag * 0.4;
+                    g += highPass + sobelMag * 1.1;
+                    b += highPass + sobelMag * 0.7;
+
+                    if (state.channelMode === 'g') {
+                        r = g; b = g;
+                    } else if (state.channelMode === 'r') {
+                        g = r; b = r;
+                    } else if (state.channelMode === 'b') {
+                        r = b; g = b;
+                    }
+
+                    r = contrastFactor * (r + p.brightness - 128) + 128;
+                    g = contrastFactor * (g + p.brightness - 128) + 128;
+                    b = contrastFactor * (b + p.brightness - 128) + 128;
+
+                    r = gammaLUT[Math.max(0, Math.min(255, r | 0))];
+                    g = gammaLUT[Math.max(0, Math.min(255, g | 0))];
+                    b = gammaLUT[Math.max(0, Math.min(255, b | 0))];
+
+                    if (state.preset === 'thermalXray') {
+                        const v = (r * 0.3 + g * 0.59 + b * 0.11) | 0;
+                        r = Math.min(255, Math.max(0, (v - 80) * 2.2));
+                        g = Math.min(255, Math.max(0, 255 - Math.abs(v - 140) * 2.2));
+                        b = Math.min(255, Math.max(0, (160 - v) * 2.0));
+                    }
+
+                    if (p.binaryEnable) {
+                        const gray = (r * 0.3 + g * 0.59 + b * 0.11);
+                        const bin = gray >= p.threshold ? 255 : 0;
+                        r = bin ? 0 : 12;
+                        g = bin ? 245 : 18;
+                        b = bin ? 155 : 30;
+                    }
+
+                    if (p.invert) {
+                        r = 255 - r;
+                        g = 255 - g;
+                        b = 255 - b;
+                    }
+
+                    dst[pIdx] = r;
+                    dst[pIdx + 1] = g;
+                    dst[pIdx + 2] = b;
+                    dst[pIdx + 3] = 255;
+                }
+            }
+
+            dstCtx.putImageData(outData, 0, 0);
+            updateHistogram(dst);
+
+            const elapsed = Math.round(performance.now() - t0);
+            document.getElementById('hudPerf').textContent = `${elapsed} ms`;
+        }
+
+        function updateHistogram(pixelData) {
+            const hCanvas = document.getElementById('histogramCanvas');
+            if (!hCanvas) return;
+            const ctx = hCanvas.getContext('2d');
+            const w = hCanvas.width;
+            const h = hCanvas.height;
+
+            const binsG = new Uint32Array(256);
+            const binsR = new Uint32Array(256);
+            let maxCount = 1;
+
+            for (let i = 0; i < pixelData.length; i += 16) {
+                const r = pixelData[i];
+                const g = pixelData[i + 1];
+                binsR[r]++;
+                binsG[g]++;
+                if (binsG[g] > maxCount) maxCount = binsG[g];
+                if (binsR[r] > maxCount) maxCount = binsR[r];
+            }
+
+            ctx.clearRect(0, 0, w, h);
+
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.35)';
+            ctx.beginPath();
+            ctx.moveTo(0, h);
+            for (let i = 0; i < 256; i++) {
+                const x = (i / 255) * w;
+                const y = h - (binsR[i] / maxCount) * (h - 8);
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(w, h);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(0, 245, 155, 0.5)';
+            ctx.beginPath();
+            ctx.moveTo(0, h);
+            for (let i = 0; i < 256; i++) {
+                const x = (i / 255) * w;
+                const y = h - (binsG[i] / maxCount) * (h - 8);
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(w, h);
+            ctx.fill();
+        }
+
+        function applyPreset(presetName) {
+            state.preset = presetName;
+            document.querySelectorAll('[id^="preset-"]').forEach(btn => btn.classList.remove('active-preset'));
+            const activeBtn = document.getElementById(`preset-${presetName}`);
+            if (activeBtn) activeBtn.classList.add('active-preset');
+
+            const presets = {
+                default: { traceBoost: 0, edgeStrength: 0, maskSuppress: 0, contrast: 0, brightness: 0, gamma: 100, binaryEnable: false, threshold: 128, invert: false },
+                copperBoost: { traceBoost: 55, edgeStrength: 20, maskSuppress: 35, contrast: 38, brightness: 6, gamma: 118, binaryEnable: false, threshold: 128, invert: false },
+                solderMaskStrip: { traceBoost: 65, edgeStrength: 10, maskSuppress: 90, contrast: 45, brightness: 10, gamma: 125, binaryEnable: false, threshold: 128, invert: false },
+                edgeSkeleton: { traceBoost: 75, edgeStrength: 85, maskSuppress: 40, contrast: 50, brightness: -10, gamma: 105, binaryEnable: false, threshold: 128, invert: false },
+                binaryBlueprint: { traceBoost: 60, edgeStrength: 25, maskSuppress: 50, contrast: 60, brightness: 0, gamma: 110, binaryEnable: true, threshold: 122, invert: false },
+                thermalXray: { traceBoost: 50, edgeStrength: 15, maskSuppress: 45, contrast: 30, brightness: 5, gamma: 115, binaryEnable: false, threshold: 128, invert: false },
+                glareKiller: { traceBoost: 45, edgeStrength: 15, maskSuppress: 25, contrast: 15, brightness: -18, gamma: 165, binaryEnable: false, threshold: 128, invert: false }
+            };
+
+            const cfg = presets[presetName] || presets.copperBoost;
+            document.getElementById('ctrl-traceBoost').value = cfg.traceBoost;
+            document.getElementById('ctrl-edgeStrength').value = cfg.edgeStrength;
+            document.getElementById('ctrl-maskSuppress').value = cfg.maskSuppress;
+            document.getElementById('ctrl-contrast').value = cfg.contrast;
+            document.getElementById('ctrl-brightness').value = cfg.brightness;
+            document.getElementById('ctrl-gamma').value = cfg.gamma;
+            document.getElementById('ctrl-binaryEnable').checked = cfg.binaryEnable;
+            document.getElementById('ctrl-threshold').value = cfg.threshold;
+            document.getElementById('ctrl-invert').checked = cfg.invert;
+
+            updateFilterParams();
+        }
+
+        function updateFilterParams() {
+            const p = state.params;
+            p.traceBoost = parseInt(document.getElementById('ctrl-traceBoost').value, 10);
+            p.edgeStrength = parseInt(document.getElementById('ctrl-edgeStrength').value, 10);
+            p.maskSuppress = parseInt(document.getElementById('ctrl-maskSuppress').value, 10);
+            p.contrast = parseInt(document.getElementById('ctrl-contrast').value, 10);
+            p.brightness = parseInt(document.getElementById('ctrl-brightness').value, 10);
+            p.gamma = parseInt(document.getElementById('ctrl-gamma').value, 10) / 100.0;
+            p.binaryEnable = document.getElementById('ctrl-binaryEnable').checked;
+            p.threshold = parseInt(document.getElementById('ctrl-threshold').value, 10);
+            p.invert = document.getElementById('ctrl-invert').checked;
+
+            document.getElementById('val-traceBoost').textContent = `${p.traceBoost}%`;
+            document.getElementById('val-edgeStrength').textContent = `${p.edgeStrength}%`;
+            document.getElementById('val-maskSuppress').textContent = `${p.maskSuppress}%`;
+            document.getElementById('val-contrast').textContent = (p.contrast > 0 ? '+' : '') + p.contrast;
+            document.getElementById('val-brightness').textContent = (p.brightness > 0 ? '+' : '') + p.brightness;
+            document.getElementById('val-gamma').textContent = p.gamma.toFixed(2);
+            document.getElementById('val-threshold').textContent = p.threshold;
+
+            const threshBox = document.getElementById('thresholdSliderBox');
+            if (p.binaryEnable) {
+                threshBox.classList.remove('opacity-40', 'pointer-events-none');
+            } else {
+                threshBox.classList.add('opacity-40', 'pointer-events-none');
+            }
+
+            runEnhancementPipeline();
+        }
+
+        function setChannelMode(mode) {
+            state.channelMode = mode;
+            ['rgb', 'g', 'r', 'b'].forEach(m => {
+                const el = document.getElementById(`chan-${m}`);
+                if (m === mode) {
+                    el.className = 'py-1.5 rounded-lg text-xs font-mono bg-emerald-500/20 text-pcb-neon border border-emerald-500/40 font-bold';
+                } else {
+                    el.className = 'py-1.5 rounded-lg text-xs font-mono bg-slate-800 text-slate-300 hover:bg-slate-700';
+                }
+            });
+            const labels = { rgb: 'RGB FULL', g: 'GREEN (MASK)', r: 'RED (COPPER)', b: 'BLUE CHANNEL' };
+            document.getElementById('channelLabel').textContent = labels[mode];
+            runEnhancementPipeline();
+        }
+
+        function toggleOriginalPreview(show) {
+            state.showOriginal = show;
+            runEnhancementPipeline();
+        }
+
+        function switchSidebarTab(tabId) {
+            ['presets', 'filters', 'analysis'].forEach(t => {
+                const content = document.getElementById(`tabContent-${t}`);
+                const btn = document.getElementById(`tabBtn-${t}`);
+                if (t === tabId) {
+                    content.classList.remove('hidden');
+                    btn.className = 'py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 bg-slate-800 text-pcb-neon border border-emerald-500/30 transition';
+                } else {
+                    content.classList.add('hidden');
+                    btn.className = 'py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition';
+                }
+            });
+        }
+
+        function applyTransform() {
+            const layer = document.getElementById('canvasTransformLayer');
+            const scaleX = state.isMirrored ? -state.zoom : state.zoom;
+            layer.style.transform = `translate3d(${state.panX}px, ${state.panY}px, 0) scale(${scaleX}, ${state.zoom})`;
+            document.getElementById('zoomPercentLabel').textContent = `${Math.round(state.zoom * 100)}%`;
+        }
+
+        function adjustZoom(delta) {
+            state.zoom = Math.max(0.25, Math.min(6.0, state.zoom + delta));
+            applyTransform();
+        }
+
+        function resetViewport() {
+            const container = document.getElementById('viewportContainer');
+            const cw = container.clientWidth - 40;
+            const ch = container.clientHeight - 80;
+            const iw = state.pcbCanvas.width || 1000;
+            const ih = state.pcbCanvas.height || 700;
+            state.zoom = Math.min(1.0, Math.min(cw / iw, ch / ih));
+            state.panX = 0;
+            state.panY = 0;
+            applyTransform();
+        }
+
+        function mirrorBottomLayer() {
+            state.isMirrored = !state.isMirrored;
+            const btn = document.getElementById('btnMirror');
+            if (state.isMirrored) {
+                btn.classList.add('bg-amber-500/20', 'border', 'border-amber-500/40', 'text-amber-300');
+                showToast('حالت قرینه افقی (تطبیق لایه زیرین برد) فعال شد');
+            } else {
+                btn.classList.remove('bg-amber-500/20', 'border', 'border-amber-500/40', 'text-amber-300');
+                showToast('نمای استاندارد لایه رویی فعال شد');
+            }
+            applyTransform();
+        }
+
+        function setInteractionTool(toolName) {
+            state.tool = toolName;
+            ['pan', 'loupe', 'trace', 'pin'].forEach(t => {
+                const btn = document.getElementById('tool' + t.charAt(0).toUpperCase() + t.slice(1));
+                if (t === toolName) {
+                    btn.classList.add('active-tool');
+                } else {
+                    btn.classList.remove('active-tool');
+                }
+            });
+
+            const subBar = document.getElementById('annotationSubBar');
+            const loupe = document.getElementById('xrayLoupe');
+            if (toolName === 'trace' || toolName === 'pin') {
+                subBar.classList.remove('hidden');
+            } else {
+                subBar.classList.add('hidden');
+            }
+            if (toolName !== 'loupe') {
+                loupe.classList.add('hidden');
+            }
+        }
+
+        function setMarkerColor(hex) {
+            state.markerColor = hex;
+            document.querySelectorAll('.marker-swatch').forEach(el => {
+                if (el.dataset.color === hex) {
+                    el.classList.add('ring-2', 'ring-white', 'scale-110');
+                    el.classList.remove('opacity-80');
+                } else {
+                    el.classList.remove('ring-2', 'ring-white', 'scale-110');
+                    el.classList.add('opacity-80');
+                }
+            });
+        }
+
+        function renderAnnotations() {
+            const ctx = state.overlayCanvas.getContext('2d');
+            ctx.clearRect(0, 0, state.overlayCanvas.width, state.overlayCanvas.height);
+
+            const allItems = [...state.annotations];
+            if (state.activeTrace) allItems.push(state.activeTrace);
+
+            allItems.forEach((item, idx) => {
+                if (item.type === 'trace' && item.points.length > 0) {
+                    ctx.save();
+                    ctx.strokeStyle = item.color;
+                    ctx.lineWidth = 4;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.shadowColor = item.color;
+                    ctx.shadowBlur = 10;
+
+                    ctx.beginPath();
+                    ctx.moveTo(item.points[0].x, item.points[0].y);
+                    for (let i = 1; i < item.points.length; i++) {
+                        ctx.lineTo(item.points[i].x, item.points[i].y);
+                    }
+                    ctx.stroke();
+                    ctx.restore();
+                } else if (item.type === 'pin') {
+                    const pt = item.points[0];
+                    ctx.save();
+                    ctx.fillStyle = item.color;
+                    ctx.shadowColor = item.color;
+                    ctx.shadowBlur = 12;
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.strokeStyle = '#090d16';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.font = 'bold 12px "JetBrains Mono", monospace';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(item.label || `TP${idx + 1}`, pt.x + 10, pt.y + 4);
+                    ctx.restore();
+                }
+            });
+
+            updateAnnotationsSidebarList();
+        }
+
+        function updateAnnotationsSidebarList() {
+            const badge = document.getElementById('pinCountBadge');
+            const list = document.getElementById('annotationsList');
+            badge.textContent = `${state.annotations.length} مورد`;
+
+            if (state.annotations.length === 0) {
+                list.innerHTML = `<div class="text-center py-4 text-slate-500 text-[11px]">با انتخاب ابزار «مارکر مسیر» یا «تست‌پوینت» در بالای صفحه، خطوط مدار را علامت‌گذاری کنید.</div>`;
+                return;
+            }
+
+            list.innerHTML = state.annotations.map((a) => `
+                <div class="flex items-center justify-between bg-slate-950/70 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full" style="background:${a.color}"></span>
+                        <span class="font-mono text-[11px] text-slate-200">${a.label}</span>
+                    </div>
+                    <span class="text-[10px] font-mono text-slate-500">${a.type === 'pin' ? `(${Math.round(a.points[0].x)}, ${Math.round(a.points[0].y)})` : `${a.points.length} pts`}</span>
+                </div>
+            `).join('');
+        }
+
+        function undoAnnotation() {
+            state.annotations.pop();
+            renderAnnotations();
+        }
+
+        function clearAnnotations() {
+            state.annotations = [];
+            renderAnnotations();
+            showToast('تمام علامت‌گذاری‌های روی برد پاک شدند');
+        }
+
+        function getCanvasCoords(clientX, clientY) {
+            const rect = state.pcbCanvas.getBoundingClientRect();
+            let normX = (clientX - rect.left) / rect.width;
+            const normY = (clientY - rect.top) / rect.height;
+            if (state.isMirrored) normX = 1.0 - normX;
+            return {
+                x: Math.max(0, Math.min(state.pcbCanvas.width, normX * state.pcbCanvas.width)),
+                y: Math.max(0, Math.min(state.pcbCanvas.height, normY * state.pcbCanvas.height))
+            };
+        }
+
+        function updateLoupe(clientX, clientY) {
+            const loupe = document.getElementById('xrayLoupe');
+            const containerRect = document.getElementById('viewportContainer').getBoundingClientRect();
+            loupe.classList.remove('hidden');
+            loupe.style.left = `${clientX - containerRect.left - 88}px`;
+            loupe.style.top = `${clientY - containerRect.top - 88}px`;
+
+            const coords = getCanvasCoords(clientX, clientY);
+            const lCtx = state.loupeCanvas.getContext('2d');
+            const zoomRadius = 35;
+            lCtx.clearRect(0, 0, 176, 176);
+            lCtx.drawImage(
+                state.pcbCanvas,
+                coords.x - zoomRadius, coords.y - zoomRadius, zoomRadius * 2, zoomRadius * 2,
+                0, 0, 176, 176
+            );
+        }
+
+        function setupViewportInteractions() {
+            const viewport = document.getElementById('viewportContainer');
+
+            const onPointerDown = (clientX, clientY) => {
+                if (state.tool === 'pan') {
+                    state.isDragging = true;
+                    state.dragStartX = clientX - state.panX;
+                    state.dragStartY = clientY - state.panY;
+                } else if (state.tool === 'loupe') {
+                    state.isDragging = true;
+                    updateLoupe(clientX, clientY);
+                } else if (state.tool === 'trace') {
+                    state.isDragging = true;
+                    const pt = getCanvasCoords(clientX, clientY);
+                    state.activeTrace = {
+                        type: 'trace',
+                        color: state.markerColor,
+                        label: `NET-${state.annotations.length + 1}`,
+                        points: [pt]
+                    };
+                    renderAnnotations();
+                } else if (state.tool === 'pin') {
+                    const pt = getCanvasCoords(clientX, clientY);
+                    const tpIndex = state.annotations.filter(a => a.type === 'pin').length + 1;
+                    state.annotations.push({
+                        type: 'pin',
+                        color: state.markerColor,
+                        label: `TP-${tpIndex}`,
+                        points: [pt]
+                    });
+                    renderAnnotations();
+                }
+            };
+
+            const onPointerMove = (clientX, clientY) => {
+                const coords = getCanvasCoords(clientX, clientY);
+                document.getElementById('hudCoords').textContent = `${Math.round(coords.x)}, ${Math.round(coords.y)}`;
+
+                if (state.tool === 'loupe') {
+                    updateLoupe(clientX, clientY);
+                    return;
+                }
+
+                if (!state.isDragging) return;
+
+                if (state.tool === 'pan') {
+                    state.panX = clientX - state.dragStartX;
+                    state.panY = clientY - state.dragStartY;
+                    applyTransform();
+                } else if (state.tool === 'trace' && state.activeTrace) {
+                    state.activeTrace.points.push(coords);
+                    renderAnnotations();
+                }
+            };
+
+            const onPointerUp = () => {
+                state.isDragging = false;
+                if (state.activeTrace) {
+                    state.annotations.push(state.activeTrace);
+                    state.activeTrace = null;
+                    renderAnnotations();
+                }
+            };
+
+            viewport.addEventListener('mousedown', e => {
+                if (e.target.closest('button')) return;
+                onPointerDown(e.clientX, e.clientY);
+            });
+            window.addEventListener('mousemove', e => onPointerMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup', onPointerUp);
+
+            viewport.addEventListener('wheel', e => {
+                e.preventDefault();
+                const delta = e.deltaY < 0 ? 0.15 : -0.15;
+                adjustZoom(delta);
+            }, { passive: false });
+
+            viewport.addEventListener('touchstart', e => {
+                if (e.target.closest('button')) return;
+                if (e.touches.length === 1) {
+                    onPointerDown(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
+
+            viewport.addEventListener('touchmove', e => {
+                if (e.touches.length === 1) {
+                    onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
+
+            viewport.addEventListener('touchend', onPointerUp);
+        }
+
+        function loadImageElementToBoard(img) {
+            const maxDim = 1600;
+            let w = img.naturalWidth || img.width;
+            let h = img.naturalHeight || img.height;
+            if (w > maxDim || h > maxDim) {
+                const scale = maxDim / Math.max(w, h);
+                w = Math.round(w * scale);
+                h = Math.round(h * scale);
+            }
+            state.sourceCanvas.width = w;
+            state.sourceCanvas.height = h;
+            state.sourceCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+            state.pcbCanvas.width = w;
+            state.pcbCanvas.height = h;
+            state.overlayCanvas.width = w;
+            state.overlayCanvas.height = h;
+
+            document.getElementById('hudResolution').textContent = `${w}×${h} px`;
+            state.annotations = [];
+            renderAnnotations();
+            resetViewport();
+            runEnhancementPipeline();
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    loadImageElementToBoard(img);
+                    showToast('تصویر برد مدار چاپی با موفقیت بارگذاری شد');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        window.receivePCBImageBase64 = function(base64Data) {
+            const img = new Image();
+            img.onload = () => {
+                loadImageElementToBoard(img);
+                showToast('تصویر از دوربین اندروید دریافت شد');
+            };
+            img.src = base64Data.startsWith('data:') ? base64Data : `data:image/jpeg;base64,${base64Data}`;
+        };
+
+        async function openCameraModal() {
+            if (window.AndroidBridge && typeof window.AndroidBridge.openNativeCamera === 'function') {
+                window.AndroidBridge.openNativeCamera();
+                return;
+            }
+
+            const modal = document.getElementById('cameraModal');
+            const video = document.getElementById('cameraVideo');
+            try {
+                state.cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+                    audio: false
+                });
+                video.srcObject = state.cameraStream;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } catch (err) {
+                document.getElementById('fileInput').click();
+                showToast('دسترسی مستقیم دوربین محدود است؛ عکس را انتخاب کنید.');
+            }
+        }
+
+        function closeCameraModal() {
+            const modal = document.getElementById('cameraModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            if (state.cameraStream) {
+                state.cameraStream.getTracks().forEach(t => t.stop());
+                state.cameraStream = null;
+            }
+        }
+
+        function captureCameraFrame() {
+            const video = document.getElementById('cameraVideo');
+            if (!video.videoWidth) return;
+
+            state.sourceCanvas.width = video.videoWidth;
+            state.sourceCanvas.height = video.videoHeight;
+            state.sourceCanvas.getContext('2d').drawImage(video, 0, 0);
+
+            state.pcbCanvas.width = video.videoWidth;
+            state.pcbCanvas.height = video.videoHeight;
+            state.overlayCanvas.width = video.videoWidth;
+            state.overlayCanvas.height = video.videoHeight;
+
+            closeCameraModal();
+            resetViewport();
+            runEnhancementPipeline();
+            showToast('فریم برد ثبت و تقویت شد');
+        }
+
+        function loadDemoPCB(style) {
+            generateSyntheticPCB(style);
+            state.annotations = [];
+            renderAnnotations();
+            resetViewport();
+            runEnhancementPipeline();
+            const names = {
+                motherboard: 'نمونه برد سبز استاندارد (SMD)',
+                power: 'نمونه برد تغذیه لایه مسی',
+                multilayer: 'نمونه برد چندلایه موبایل'
+            };
+            showToast(`${names[style]} بارگذاری شد`);
+        }
+
+        function exportEnhancedImage() {
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = state.pcbCanvas.width;
+            exportCanvas.height = state.pcbCanvas.height;
+            const ctx = exportCanvas.getContext('2d');
+
+            if (state.isMirrored) {
+                ctx.translate(exportCanvas.width, 0);
+                ctx.scale(-1, 1);
+            }
+
+            ctx.drawImage(state.pcbCanvas, 0, 0);
+            ctx.drawImage(state.overlayCanvas, 0, 0);
+
+            const link = document.createElement('a');
+            link.download = `pcb-enhanced-${Date.now()}.png`;
+            link.href = exportCanvas.toDataURL('image/png');
+            link.click();
+            showToast('خروجی باکیفیت PNG با موفقیت ذخیره شد');
+        }
+
+        let toastTimer = null;
+        function showToast(message) {
+            const box = document.getElementById('toastBox');
+            document.getElementById('toastText').textContent = message;
+            box.classList.remove('opacity-0', 'translate-y-2');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                box.classList.add('opacity-0', 'translate-y-2');
+            }, 2600);
+        }
+
+        window.onload = function () {
+            setupViewportInteractions();
+            generateSyntheticPCB('motherboard');
+            resetViewport();
+            applyPreset('copperBoost');
+            window.addEventListener('resize', resetViewport);
+        };
+    </script>
 </body>
 </html>
