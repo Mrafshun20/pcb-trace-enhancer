@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PCB Trace Enhancer Pro</title>
+    <style>
+        /* === 100% OFFLINE NATIVE-GRADE CSS (NO CDN REQUIRED) === */
+        :root {
+            --bg-root: #090d14;
+            --bg-surface: #111823;
+            --bg-elevated: #192333;
+            --bg-hover: #223046;
+            --border: #27364f;
+            --primary: #10b981;
+            --primary-bright: #00f59b;
+            --primary-soft: rgba(16, 185, 129, 0.15);
+            --accent: #0ea5e9;
+            --amber: #f59e0b;
+            --danger: #ef4444;
+            --text: #f1f5f9;
+            --text-sub: #94a3b8;
+            --radius-lg: 14px;
+            --radius-md: 10px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-root);
+            color: var(--text);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Tahoma, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* === HEADER === */
+        .topbar {
+            height: 56px;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            flex-shrink: 0;
+            z-index: 40;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--primary-soft);
+            border: 1px solid rgba(0, 245, 155, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-bright);
+            flex-shrink: 0;
+        }
+
+        .brand-text h1 {
+            font-size: 14px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        .brand-text span {
+            font-size: 11px;
+            color: var(--text-sub);
+            display: block;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .action-btn {
+            height: 38px;
+            padding: 0 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            white-space: nowrap;
+        }
+
+        .action-btn:active {
+            transform: scale(0.96);
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #04130d;
+            border: none;
+            box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .action-btn.camera {
+            border-color: rgba(14, 165, 233, 0.45);
+            color: #38bdf8;
+        }
+
+        .icon {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        /* === MAIN WORKSPACE LAYOUT (Responsive Desktop + Mobile) === */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        @media (min-width: 900px) {
+            .workspace {
+                flex-direction: row;
+            }
+        }
+
+        /* === CANVAS STAGE === */
+        .stage {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: #06090f;
+            background-image:
+                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 24px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+            min-height: 220px;
+        }
+
+        /* Floating Mode Bar inside Stage */
+        .stage-modes {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 25;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(17, 24, 35, 0.92);
+            border: 1px solid var(--border);
+            padding: 4px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.55);
+            max-width: 95%;
+            overflow-x: auto;
+        }
+
+        .mode-btn {
+            height: 30px;
+            padding: 0 10px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            font-size: 11.5px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: #04130d;
+        }
+
+        /* Canvas Wrapper for Pan/Zoom */
+        #canvasContainer {
+            position: relative;
+            transform-origin: center center;
+            will-change: transform;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 4px;
+            background: #000;
+        }
+
+        #pcbCanvas {
+            display: block;
+            max-width: none;
+        }
+
+        /* Split Comparison Line */
+        #splitLine {
+            display: none;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--primary-bright);
+            box-shadow: 0 0 8px var(--primary-bright);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #splitKnob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--primary-bright);
+            color: #04130d;
+            font-size: 12px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.6);
+        }
+
+        /* Bottom Stage Floating Controls (Zoom / Mirror / Info) */
+        .stage-footer {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 25;
+        }
+
+        .stage-pill {
+            pointer-events: auto;
+            background: rgba(17, 24, 35, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-sub);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+        }
+
+        .mini-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .mini-btn.active {
+            border-color: var(--amber);
+            color: var(--amber);
+            background: rgba(245, 158, 11, 0.15);
+        }
+
+        /* === CONTROL PANEL (BOTTOM ON MOBILE, SIDEBAR ON DESKTOP) === */
+        .control-panel {
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            height: 270px;
+            flex-shrink: 0;
+            z-index: 30;
+        }
+
+        @media (min-width: 900px) {
+            .control-panel {
+                width: 360px;
+                height: 100%;
+                border-top: none;
+                border-right: 1px solid var(--border);
+            }
+        }
+
+        /* Panel Navigation Tabs */
+        .panel-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            padding: 8px 12px;
+            background: #0c111a;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            height: 34px;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-sub);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .tab-btn.active {
+            background: var(--bg-elevated);
+            color: var(--primary-bright);
+            border-color: rgba(0, 245, 155, 0.3);
+        }
+
+        /* Panel Scrollable Content */
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        /* Presets Grid */
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        @media (min-width: 900px) {
+            .presets-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .preset-item {
+            background: var(--bg-elevated);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 10px 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-height: 68px;
+        }
+
+        .preset-item.active {
+            border-color: var(--primary-bright);
+            background: var(--primary-soft);
+        }
+
+        .preset-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .preset-sub {
+            font-size: 10px;
+            color: var(--text-sub);
+        }
+
+        /* Sliders List */
+        .sliders-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        @media (min-width: 550px) and (max-width: 899px) {
+            .sliders-list {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .slider-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 9px 12px;
+        }
+
+        .slider-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 7px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .slider-value {
+            font-family: monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary-bright);
+            direction: ltr;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 999px;
+            background: #0b1018;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-bright);
+            border: 2px solid #090d14;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(0, 245, 155, 0.5);
+        }
+
+        /* Channels & Extra Tools */
+        .channels-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .chip-btn {
+            height: 36px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text);
+            font-size: 11.5px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .chip-btn.active {
+            border-color: var(--primary-bright);
+            background: var(--primary-soft);
+            color: var(--primary-bright);
+        }
+
+        /* Toast Notification */
+        #toast {
+            position: fixed;
+            top: 66px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            background: #111823;
+            border: 1px solid var(--primary-bright);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.65);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        #toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================= TOP BAR ================= -->
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                    <rect x="9" y="9" width="6" height="6"></rect>
+                    <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"></path>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <h1>PCB Trace Enhancer</h1>
+                <span>استودیو تشخیص و تقویت مدار چاپی</span>
+            </div>
+        </div>
+
+        <div class="top-actions">
+            <input type="file" id="fileInput" accept="image/*" class="hidden">
+
+            <button class="action-btn" id="uploadBtn" onclick="openGalleryPicker()">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span>گالری</span>
+            </button>
+
+            <button class="action-btn camera" id="cameraBtn" onclick="openNativeOrWebCamera()">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+                <span>دوربین</span>
+            </button>
+
+            <button class="action-btn primary" id="downloadBtn" onclick="saveOutputImage()">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                </svg>
+                <span>ذخیره</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ================= MAIN WORKSPACE ================= -->
+    <div class="workspace">
+
+        <!-- INTERACTIVE CANVAS STAGE -->
+        <main class="stage" id="stage">
+            <!-- Top Floating View Modes -->
+            <div class="stage-modes">
+                <button class="mode-btn active" id="view-pan" onclick="setStageMode('pan')">✋ حرکت و زوم</button>
+                <button class="mode-btn" id="view-split" onclick="setStageMode('split')">🌗 مقایسه کشویی</button>
+                <button class="mode-btn" id="view-orig"
+                    onmousedown="holdOriginal(true)" onmouseup="holdOriginal(false)" onmouseleave="holdOriginal(false)"
+                    ontouchstart="holdOriginal(true)" ontouchend="holdOriginal(false)">
+                    👁️ نگه دارید: اصلی
+                </button>
+            </div>
+
+            <!-- Transformable Canvas -->
+            <div id="canvasContainer">
+                <canvas id="pcbCanvas"></canvas>
+                <div id="splitLine">
+                    <div id="splitKnob">↔</div>
+                </div>
+            </div>
+
+            <!-- Stage Bottom Bar -->
+            <div class="stage-footer">
+                <div class="stage-pill">
+                    <span id="resBadge" style="font-family:monospace">960×640</span>
+                </div>
+
+                <div class="stage-pill">
+                    <button class="mini-btn" id="mirrorBtn" onclick="toggleMirrorBoard()" title="قرینه افقی (پشت و روی برد)">⇄</button>
+                    <button class="mini-btn" onclick="changeZoom(-0.25)">−</button>
+                    <span id="zoomBadge" onclick="fitBoardToStage()" style="min-width:42px;text-align:center;font-family:monospace;color:var(--primary-bright);cursor:pointer">100%</span>
+                    <button class="mini-btn" onclick="changeZoom(0.25)">+</button>
+                    <button class="mini-btn" onclick="fitBoardToStage()" title="تنظیم در صفحه">⛶</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- BOTTOM / SIDEBAR CONTROLS -->
+        <aside class="control-panel">
+            <div class="panel-tabs">
+                <button class="tab-btn active" id="tabBtn-presets" onclick="openTab('presets')">⚡ حالت‌های آماده</button>
+                <button class="tab-btn" id="tabBtn-sliders" onclick="openTab('sliders')">🎚️ تنظیمات دستی</button>
+                <button class="tab-btn" id="tabBtn-channels" onclick="openTab('channels')">🎨 کانال و ابزار</button>
+            </div>
+
+            <div class="panel-body">
+                <!-- TAB 1: PRESETS -->
+                <div id="tab-presets" class="presets-grid">
+                    <div class="preset-item active" id="pre-copper" onclick="applyPresetMode('copper')">
+                        <div class="preset-title">تقویت مسیر مس</div>
+                        <div class="preset-sub">برجسته‌سازی خطوط</div>
+                    </div>
+                    <div class="preset-item" id="pre-nomask" onclick="applyPresetMode('nomask')">
+                        <div class="preset-title">حذف چاپ سبز</div>
+                        <div class="preset-sub">دید زیر رنگ محافظ</div>
+                    </div>
+                    <div class="preset-item" id="pre-edges" onclick="applyPresetMode('edges')">
+                        <div class="preset-title">استخراج لبه‌ها</div>
+                        <div class="preset-sub">ردیابی مرزهای پد</div>
+                    </div>
+                    <div class="preset-item" id="pre-binary" onclick="applyPresetMode('binary')">
+                        <div class="preset-title">نقشه سیاه‌وسفید</div>
+                        <div class="preset-sub">باینری مهندسی</div>
+                    </div>
+                    <div class="preset-item" id="pre-xray" onclick="applyPresetMode('xray')">
+                        <div class="preset-title">طیف حرارتی</div>
+                        <div class="preset-sub">تراکم فلز و قلع</div>
+                    </div>
+                    <div class="preset-item" id="pre-reset" onclick="applyPresetMode('reset')">
+                        <div class="preset-title">تصویر خام</div>
+                        <div class="preset-sub">بدون فیلتر</div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: SLIDERS -->
+                <div id="tab-sliders" class="sliders-list hidden">
+                    <div class="slider-card">
+                        <div class="slider-header">
+                            <span>تقویت برجستگی خطوط (Trace Boost)</span>
+                            <span class="slider-value" id="val-boost">55%</span>
+                        </div>
+                        <input type="range" id="sl-boost" min="0" max="100" value="55" oninput="readSliders()">
+                    </div>
+
+                    <div class="slider-card">
+                        <div class="slider-header">
+                            <span>تضعیف رنگ محافظ برد (Mask Removal)</span>
+                            <span class="slider-value" id="val-mask">40%</span>
+                        </div>
+                        <input type="range" id="sl-mask" min="0" max="100" value="40" oninput="readSliders()">
+                    </div>
+
+                    <div class="slider-card">
+                        <div class="slider-header">
+                            <span>کنتراست مدار (Contrast)</span>
+                            <span class="slider-value" id="val-contrast">+35</span>
+                        </div>
+                        <input type="range" id="sl-contrast" min="-80" max="100" value="35" oninput="readSliders()">
+                    </div>
+
+                    <div class="slider-card">
+                        <div class="slider-header">
+                            <span>اصلاح روشنایی و سایه (Gamma)</span>
+                            <span class="slider-value" id="val-gamma">1.20</span>
+                        </div>
+                        <input type="range" id="sl-gamma" min="50" max="240" value="120" oninput="readSliders()">
+                    </div>
+
+                    <div class="slider-card">
+                        <div class="slider-header">
+                            <span>تشخیص لبه (Sobel Edge)</span>
+                            <span class="slider-value" id="val-edge">20%</span>
+                        </div>
+                        <input type="range" id="sl-edge" min="0" max="100" value="20" oninput="readSliders()">
+                    </div>
+
+                    <div class="slider-card">
+                        <div class="slider-header">
+                            <span>آستانه باینری (Threshold)</span>
+                            <span class="slider-value" id="val-thresh">خاموش</span>
+                        </div>
+                        <input type="range" id="sl-thresh" min="0" max="240" value="0" oninput="readSliders()">
+                    </div>
+                </div>
+
+                <!-- TAB 3: CHANNELS & SAMPLES -->
+                <div id="tab-channels" class="channels-wrap hidden">
+                    <div style="font-size:11.5px;color:var(--text-sub);font-weight:700">تفکیک کانال رنگی برد:</div>
+                    <div class="btn-row">
+                        <button class="chip-btn active" id="ch-rgb" onclick="selectChannel('rgb')">RGB کامل</button>
+                        <button class="chip-btn" id="ch-g" onclick="selectChannel('g')">کانال سبز</button>
+                        <button class="chip-btn" id="ch-r" onclick="selectChannel('r')">کانال مس (R)</button>
+                        <button class="chip-btn" id="ch-b" onclick="selectChannel('b')">کانال آبی</button>
+                    </div>
+
+                    <div style="font-size:11.5px;color:var(--text-sub);font-weight:700;margin-top:4px">ابزارهای کمکی و نمونه برد:</div>
+                    <div class="btn-row">
+                        <button class="chip-btn" id="btnInvert" onclick="toggleInvertColors()">نگاتیو</button>
+                        <button class="chip-btn" onclick="createSampleBoard('green')">نمونه سبز</button>
+                        <button class="chip-btn" onclick="createSampleBoard('copper')">نمونه مسی</button>
+                        <button class="chip-btn" onclick="createSampleBoard('blue')">نمونه آبی</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div id="toast">آماده</div>
+
+    <!-- ================= CORE ENGINE & ANDROID BRIDGE ================= -->
+    <script>
+        const state = {
+            srcCanvas: document.createElement('canvas'),
+            enhCanvas: document.createElement('canvas'),
+            dispCanvas: document.getElementById('pcbCanvas'),
+            zoom: 1,
+            panX: 0,
+            panY: 0,
+            mirrored: false,
+            stageMode: 'pan', // 'pan' | 'split'
+            splitPos: 0.5,
+            peekOriginal: false,
+            channel: 'rgb',
+            invert: false,
+            preset: 'copper',
+            dragging: false,
+            startX: 0,
+            startY: 0,
+            pinchDist: 0,
+            params: {
+                boost: 55,
+                mask: 40,
+                contrast: 35,
+                gamma: 1.2,
+                edge: 20,
+                thresh: 0
+            }
+        };
+
+        let toastTimer = null;
+        function showToast(text) {
+            const t = document.getElementById('toast');
+            t.textContent = text;
+            t.classList.add('visible');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('visible'), 2200);
+        }
+
+        // --- Generate Built-in Realistic Sample PCB ---
+        function createSampleBoard(theme = 'green') {
+            const w = 960, h = 640;
+            state.srcCanvas.width = w;
+            state.srcCanvas.height = h;
+            const ctx = state.srcCanvas.getContext('2d');
+
+            const pal = {
+                green:  { bg1: '#07422b', bg2: '#042618', tr1: '#156e4b', tr2: '#259c6c', pad: '#eab308' },
+                copper: { bg1: '#4a1d05', bg2: '#290f02', tr1: '#8f3d13', tr2: '#c75b22', pad: '#e2e8f0' },
+                blue:   { bg1: '#0a294a', bg2: '#051526', tr1: '#164d82', tr2: '#2573bd', pad: '#facc15' }
+            }[theme] || { bg1: '#07422b', bg2: '#042618', tr1: '#156e4b', tr2: '#259c6c', pad: '#eab308' };
+
+            const g = ctx.createRadialGradient(w*0.5, h*0.5, 40, w*0.5, h*0.5, w*0.65);
+            g.addColorStop(0, pal.bg1);
+            g.addColorStop(1, pal.bg2);
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            const cx = w / 2, cy = h / 2;
+
+            for (let i = -11; i <= 11; i++) {
+                const d = i * 10;
+                ctx.strokeStyle = (i % 3 === 0) ? pal.tr2 : pal.tr1;
+                ctx.lineWidth = (i % 4 === 0) ? 4.5 : 2.5;
+
+                ctx.beginPath();
+                ctx.moveTo(cx - 80, cy + d);
+                ctx.lineTo(cx - 180, cy + d);
+                ctx.lineTo(cx - 240, cy + d + i * 6);
+                ctx.lineTo(60, cy + d + i * 6);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(cx + 80, cy + d);
+                ctx.lineTo(cx + 180, cy + d);
+                ctx.lineTo(cx + 240, cy + d - i * 6);
+                ctx.lineTo(w - 60, cy + d - i * 6);
+                ctx.stroke();
+            }
+
+            // Central QFP IC
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(cx - 60, cy - 60, 120, 120);
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(cx - 64, cy - 64, 128, 128);
+
+            ctx.fillStyle = pal.pad;
+            for (let i = -11; i <= 11; i++) {
+                const p = i * 4.5;
+                ctx.fillRect(cx - 78, cy + p - 1.5, 13, 3);
+                ctx.fillRect(cx + 65, cy + p - 1.5, 13, 3);
+                ctx.fillRect(cx + p - 1.5, cy - 78, 3, 13);
+                ctx.fillRect(cx + p - 1.5, cy + 65, 3, 13);
+            }
+
+            // Vias
+            for (let v = 0; v < 60; v++) {
+                const vx = 65 + ((v * 131) % (w - 130));
+                const vy = 55 + ((v * 241) % (h - 110));
+                if (Math.abs(vx - cx) < 95 && Math.abs(vy - cy) < 95) continue;
+                ctx.fillStyle = '#cbd5e1';
+                ctx.beginPath(); ctx.arc(vx, vy, 5, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#06090f';
+                ctx.beginPath(); ctx.arc(vx, vy, 2.2, 0, Math.PI * 2); ctx.fill();
+            }
+
+            setupCanvasSize(w, h);
+            runPipeline();
+            fitBoardToStage();
+        }
+
+        function setupCanvasSize(w, h) {
+            state.enhCanvas.width = w;
+            state.enhCanvas.height = h;
+            state.dispCanvas.width = w;
+            state.dispCanvas.height = h;
+            document.getElementById('resBadge').textContent = `${w}×${h}`;
+        }
+
+        // --- PCB Trace Image Processing Pipeline ---
+        function runPipeline() {
+            const w = state.srcCanvas.width;
+            const h = state.srcCanvas.height;
+            if (!w || !h) return;
+
+            const srcCtx = state.srcCanvas.getContext('2d');
+            const enhCtx = state.enhCanvas.getContext('2d');
+            const srcData = srcCtx.getImageData(0, 0, w, h);
+            const src = srcData.data;
+
+            const outData = enhCtx.createImageData(w, h);
+            const dst = outData.data;
+
+            const p = state.params;
+            const cFactor = (259 * (p.contrast + 255)) / (255 * (259 - p.contrast));
+            const invGamma = 1.0 / p.gamma;
+            const boostGain = p.boost / 24.0;
+            const maskSupp = p.mask / 100.0;
+            const edgeMix = p.edge / 100.0;
+
+            const gLUT = new Uint8ClampedArray(256);
+            for (let i = 0; i < 256; i++) {
+                gLUT[i] = Math.pow(i / 255.0, invGamma) * 255.0;
+            }
+
+            const lum = new Float32Array(w * h);
+            for (let i = 0, j = 0; i < src.length; i += 4, j++) {
+                lum[j] = 0.299 * src[i] + 0.587 * src[i + 1] + 0.114 * src[i + 2];
+            }
+
+            for (let y = 0; y < h; y++) {
+                const yOff = y * w;
+                const borderY = (y <= 1 || y >= h - 2);
+
+                for (let x = 0; x < w; x++) {
+                    const idx = yOff + x;
+                    const pIdx = idx * 4;
+
+                    let r = src[pIdx];
+                    let g = src[pIdx + 1];
+                    let b = src[pIdx + 2];
+
+                    if (maskSupp > 0) {
+                        const greenExcess = Math.max(0, g - (r + b) * 0.5);
+                        g -= greenExcess * maskSupp * 0.75;
+                        r += greenExcess * maskSupp * 0.55;
+                        b += greenExcess * maskSupp * 0.25;
+                    }
+
+                    let hp = 0, sobel = 0;
+                    if (!borderY && x > 1 && x < w - 2) {
+                        const avg = (lum[idx - 2] + lum[idx + 2] + lum[idx - w * 2] + lum[idx + w * 2]) * 0.25;
+                        hp = (lum[idx] - avg) * boostGain;
+
+                        if (edgeMix > 0) {
+                            const gx = -lum[idx - w - 1] + lum[idx - w + 1] - 2 * lum[idx - 1] + 2 * lum[idx + 1] - lum[idx + w - 1] + lum[idx + w + 1];
+                            const gy = -lum[idx - w - 1] - 2 * lum[idx - w] - lum[idx - w + 1] + lum[idx + w - 1] + 2 * lum[idx + w] + lum[idx + w + 1];
+                            sobel = Math.min(255, Math.sqrt(gx * gx + gy * gy)) * edgeMix;
+                        }
+                    }
+
+                    r += hp + sobel * 0.35;
+                    g += hp + sobel * 1.1;
+                    b += hp + sobel * 0.65;
+
+                    if (state.channel === 'g') { r = g; b = g; }
+                    else if (state.channel === 'r') { g = r; b = r; }
+                    else if (state.channel === 'b') { r = b; g = b; }
+
+                    r = cFactor * (r - 128) + 128;
+                    g = cFactor * (g - 128) + 128;
+                    b = cFactor * (b - 128) + 128;
+
+                    r = gLUT[Math.max(0, Math.min(255, r | 0))];
+                    g = gLUT[Math.max(0, Math.min(255, g | 0))];
+                    b = gLUT[Math.max(0, Math.min(255, b | 0))];
+
+                    if (state.preset === 'xray') {
+                        const v = (r * 0.3 + g * 0.59 + b * 0.11) | 0;
+                        r = Math.min(255, Math.max(0, (v - 75) * 2.2));
+                        g = Math.min(255, Math.max(0, 255 - Math.abs(v - 135) * 2.1));
+                        b = Math.min(255, Math.max(0, (165 - v) * 2.0));
+                    }
+
+                    if (p.thresh > 0) {
+                        const gray = (r * 0.3 + g * 0.59 + b * 0.11);
+                        const on = gray >= p.thresh;
+                        r = on ? 0 : 10;
+                        g = on ? 240 : 16;
+                        b = on ? 155 : 26;
+                    }
+
+                    if (state.invert) {
+                        r = 255 - r; g = 255 - g; b = 255 - b;
+                    }
+
+                    dst[pIdx] = r;
+                    dst[pIdx + 1] = g;
+                    dst[pIdx + 2] = b;
+                    dst[pIdx + 3] = 255;
+                }
+            }
+
+            enhCtx.putImageData(outData, 0, 0);
+            drawDisplayCanvas();
+        }
+
+        function drawDisplayCanvas() {
+            const w = state.dispCanvas.width;
+            const h = state.dispCanvas.height;
+            const ctx = state.dispCanvas.getContext('2d');
+            ctx.clearRect(0, 0, w, h);
+
+            if (state.peekOriginal) {
+                ctx.drawImage(state.srcCanvas, 0, 0);
+                return;
+            }
+
+            ctx.drawImage(state.enhCanvas, 0, 0);
+
+            const splitLine = document.getElementById('splitLine');
+            if (state.stageMode === 'split') {
+                const splitX = Math.round(w * state.splitPos);
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(0, 0, splitX, h);
+                ctx.clip();
+                ctx.drawImage(state.srcCanvas, 0, 0);
+                ctx.restore();
+
+                splitLine.style.display = 'block';
+                splitLine.style.left = `${state.splitPos * 100}%`;
+            } else {
+                splitLine.style.display = 'none';
+            }
+        }
+
+        // --- UI Controls ---
+        function openTab(name) {
+            ['presets', 'sliders', 'channels'].forEach(t => {
+                document.getElementById(`tabBtn-${t}`).classList.toggle('active', t === name);
+                document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== name);
+            });
+        }
+
+        function applyPresetMode(name) {
+            state.preset = name;
+            ['copper', 'nomask', 'edges', 'binary', 'xray', 'reset'].forEach(p => {
+                const el = document.getElementById(`pre-${p}`);
+                if (el) el.classList.toggle('active', p === name);
+            });
+
+            const cfg = {
+                copper: { boost: 55, mask: 40, contrast: 35, gamma: 120, edge: 20, thresh: 0 },
+                nomask: { boost: 70, mask: 95, contrast: 45, gamma: 130, edge: 10, thresh: 0 },
+                edges:  { boost: 75, mask: 40, contrast: 50, gamma: 105, edge: 85, thresh: 0 },
+                binary: { boost: 60, mask: 50, contrast: 55, gamma: 115, edge: 25, thresh: 125 },
+                xray:   { boost: 55, mask: 45, contrast: 30, gamma: 115, edge: 15, thresh: 0 },
+                reset:  { boost: 0,  mask: 0,  contrast: 0,  gamma: 100, edge: 0,  thresh: 0 }
+            }[name];
+
+            if (cfg) {
+                document.getElementById('sl-boost').value = cfg.boost;
+                document.getElementById('sl-mask').value = cfg.mask;
+                document.getElementById('sl-contrast').value = cfg.contrast;
+                document.getElementById('sl-gamma').value = cfg.gamma;
+                document.getElementById('sl-edge').value = cfg.edge;
+                document.getElementById('sl-thresh').value = cfg.thresh;
+                readSliders();
+            }
+        }
+
+        function readSliders() {
+            const p = state.params;
+            p.boost = +document.getElementById('sl-boost').value;
+            p.mask = +document.getElementById('sl-mask').value;
+            p.contrast = +document.getElementById('sl-contrast').value;
+            p.gamma = +document.getElementById('sl-gamma').value / 100;
+            p.edge = +document.getElementById('sl-edge').value;
+            p.thresh = +document.getElementById('sl-thresh').value;
+
+            document.getElementById('val-boost').textContent = `${p.boost}%`;
+            document.getElementById('val-mask').textContent = `${p.mask}%`;
+            document.getElementById('val-contrast').textContent = (p.contrast > 0 ? '+' : '') + p.contrast;
+            document.getElementById('val-gamma').textContent = p.gamma.toFixed(2);
+            document.getElementById('val-edge').textContent = `${p.edge}%`;
+            document.getElementById('val-thresh').textContent = p.thresh > 0 ? p.thresh : 'خاموش';
+
+            runPipeline();
+        }
+
+        function selectChannel(ch) {
+            state.channel = ch;
+            ['rgb', 'g', 'r', 'b'].forEach(c => {
+                document.getElementById(`ch-${c}`).classList.toggle('active', c === ch);
+            });
+            runPipeline();
+        }
+
+        function toggleInvertColors() {
+            state.invert = !state.invert;
+            document.getElementById('btnInvert').classList.toggle('active', state.invert);
+            runPipeline();
+        }
+
+        function holdOriginal(flag) {
+            state.peekOriginal = flag;
+            drawDisplayCanvas();
+        }
+
+        // --- Stage Zoom / Pan / Split ---
+        function applyStageTransform() {
+            const box = document.getElementById('canvasContainer');
+            const sx = state.mirrored ? -state.zoom : state.zoom;
+            box.style.transform = `translate3d(${state.panX}px, ${state.panY}px, 0) scale(${sx}, ${state.zoom})`;
+            document.getElementById('zoomBadge').textContent = `${Math.round(state.zoom * 100)}%`;
+        }
+
+        function changeZoom(delta) {
+            state.zoom = Math.max(0.2, Math.min(6, state.zoom + delta));
+            applyStageTransform();
+        }
+
+        function fitBoardToStage() {
+            const st = document.getElementById('stage');
+            const sw = st.clientWidth - 28;
+            const sh = st.clientHeight - 90;
+            const cw = state.dispCanvas.width || 960;
+            const ch = state.dispCanvas.height || 640;
+            state.zoom = Math.max(0.2, Math.min(1.2, Math.min(sw / cw, sh / ch)));
+            state.panX = 0;
+            state.panY = 0;
+            applyStageTransform();
+        }
+
+        function toggleMirrorBoard() {
+            state.mirrored = !state.mirrored;
+            document.getElementById('mirrorBtn').classList.toggle('active', state.mirrored);
+            applyStageTransform();
+            showToast(state.mirrored ? 'قرینه افقی فعال شد' : 'نمای عادی');
+        }
+
+        function setStageMode(mode) {
+            state.stageMode = mode;
+            document.getElementById('view-pan').classList.toggle('active', mode === 'pan');
+            document.getElementById('view-split').classList.toggle('active', mode === 'split');
+            drawDisplayCanvas();
+        }
+
+        function updateSplitFromClientX(clientX) {
+            const rect = state.dispCanvas.getBoundingClientRect();
+            if (!rect.width) return;
+            state.splitPos = Math.max(0.05, Math.min(0.95, (clientX - rect.left) / rect.width));
+            drawDisplayCanvas();
+        }
+
+        function initStageEvents() {
+            const st = document.getElementById('stage');
+
+            const onDown = (cx, cy) => {
+                state.dragging = true;
+                if (state.stageMode === 'pan') {
+                    state.startX = cx - state.panX;
+                    state.startY = cy - state.panY;
+                } else if (state.stageMode === 'split') {
+                    updateSplitFromClientX(cx);
+                }
+            };
+
+            const onMove = (cx, cy) => {
+                if (!state.dragging) return;
+                if (state.stageMode === 'pan') {
+                    state.panX = cx - state.startX;
+                    state.panY = cy - state.startY;
+                    applyStageTransform();
+                } else if (state.stageMode === 'split') {
+                    updateSplitFromClientX(cx);
+                }
+            };
+
+            const onUp = () => { state.dragging = false; };
+
+            st.addEventListener('mousedown', e => {
+                if (e.target.closest('button')) return;
+                onDown(e.clientX, e.clientY);
+            });
+            window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup', onUp);
+
+            st.addEventListener('wheel', e => {
+                e.preventDefault();
+                changeZoom(e.deltaY < 0 ? 0.15 : -0.15);
+            }, { passive: false });
+
+            st.addEventListener('touchstart', e => {
+                if (e.target.closest('button')) return;
+                if (e.touches.length === 2) {
+                    state.dragging = false;
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    state.pinchDist = Math.hypot(dx, dy);
+                } else if (e.touches.length === 1) {
+                    onDown(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
+
+            st.addEventListener('touchmove', e => {
+                if (e.touches.length === 2 && state.pinchDist > 0) {
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    const dist = Math.hypot(dx, dy);
+                    changeZoom((dist - state.pinchDist) * 0.007);
+                    state.pinchDist = dist;
+                } else if (e.touches.length === 1) {
+                    onMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
+
+            st.addEventListener('touchend', () => {
+                state.pinchDist = 0;
+                onUp();
+            });
+        }
+
+        // --- Image Loading & Exact Android WebView Bridge (MainActivity.kt) ---
+        function loadBoardImage(img) {
+            const maxSide = 1600;
+            let w = img.naturalWidth || img.width;
+            let h = img.naturalHeight || img.height;
+            if (w > maxSide || h > maxSide) {
+                const ratio = maxSide / Math.max(w, h);
+                w = Math.round(w * ratio);
+                h = Math.round(h * ratio);
+            }
+            state.srcCanvas.width = w;
+            state.srcCanvas.height = h;
+            state.srcCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            setupCanvasSize(w, h);
+            runPipeline();
+            fitBoardToStage();
+            showToast('تصویر برد بارگذاری شد');
+        }
+
+        function openGalleryPicker() {
+            const input = document.getElementById('fileInput');
+            input.removeAttribute('capture');
+            input.click();
+        }
+
+        function openNativeOrWebCamera() {
+            // Exact match for MainActivity.kt -> addJavascriptInterface(..., "AndroidCamera")
+            if (window.AndroidCamera && typeof window.AndroidCamera.openNativeCamera === 'function') {
+                window.AndroidCamera.openNativeCamera();
+                return;
+            }
+            if (window.Android && typeof window.Android.openCamera === 'function') {
+                window.Android.openCamera();
+                return;
+            }
+            const input = document.getElementById('fileInput');
+            input.setAttribute('capture', 'environment');
+            input.click();
+        }
+
+        document.getElementById('fileInput').addEventListener('change', e => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                const img = new Image();
+                img.onload = () => loadBoardImage(img);
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Global callbacks invoked by Android MainActivity.kt after camera capture
+        window.onNativeCameraResult = window.onCameraImageCaptured = window.receivePCBImageBase64 = window.loadImageFromAndroid = function(data) {
+            if (!data) return;
+            const img = new Image();
+            img.onload = () => loadBoardImage(img);
+            img.src = (data.startsWith('data:') || data.startsWith('content:') || data.startsWith('file:'))
+                ? data
+                : `data:image/jpeg;base64,${data}`;
+        };
+
+        function saveOutputImage() {
+            const out = document.createElement('canvas');
+            out.width = state.dispCanvas.width;
+            out.height = state.dispCanvas.height;
+            const ctx = out.getContext('2d');
+            if (state.mirrored) {
+                ctx.translate(out.width, 0);
+                ctx.scale(-1, 1);
+            }
+            ctx.drawImage(state.enhCanvas, 0, 0);
+
+            const dataUrl = out.toDataURL('image/png');
+            if (window.AndroidCamera && typeof window.AndroidCamera.saveEnhancedImage === 'function') {
+                window.AndroidCamera.saveEnhancedImage(dataUrl);
+                showToast('در گالری گوشی ذخیره شد');
+                return;
+            }
+            const a = document.createElement('a');
+            a.download = `pcb-enhanced-${Date.now()}.png`;
+            a.href = dataUrl;
+            a.click();
+            showToast('تصویر ذخیره شد');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initStageEvents();
+            createSampleBoard('green');
+            window.addEventListener('resize', fitBoardToStage);
+        });
+    </script>
+</body>
+</html>
